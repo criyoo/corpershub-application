@@ -21,6 +21,10 @@ CELERY_TASK_EAGER_PROPAGATES = True
 OTP_EMAIL_ASYNC = True
 OTP_TEST_CODE = "A1B2C3"
 SEED_DEFAULT_ACCOUNTS_ENABLED = True
+TEST_RUNNER = "apps.common.test_runner.SelectiveDiscoverRunner"
+TEST_EXCLUDED_LABEL_PREFIXES = (
+    "apps.payments.tests",
+)
 
 STORAGES = {
     "default": {

@@ -276,7 +276,7 @@ def issue_password_reset_otp(*, user: User):
 
 def dispatch_otp_email(*, email: str, code: str, purpose: str) -> bool:
     try:
-        if getattr(settings, "OTP_EMAIL_ASYNC", False):
+        if getattr(settings, "OTP_EMAIL_ASYNC", True):
             send_otp_email_task.delay(email, code, purpose)
             return True
         deliver_otp_email(email, code, purpose)

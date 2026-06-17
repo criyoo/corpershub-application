@@ -526,16 +526,17 @@ class AuthAPITests(APITestCase):
         side_effect=RuntimeError("queue unavailable"),
     )
     def test_corper_registration_returns_service_unavailable_when_otp_queueing_fails(self, _send_email_mock):
-        response = self.client.post(
-            "/api/auth/register/",
-            {
-                "email": "corper@example.ng",
-                "password": "ComplexPass123!",
-                "role": "corper",
-                "subscription_plan_code": "free",
-            },
-            format="json",
-        )
+        with patch("apps.accounts.services.logger.exception"):
+            response = self.client.post(
+                "/api/auth/register/",
+                {
+                    "email": "corper@example.ng",
+                    "password": "ComplexPass123!",
+                    "role": "corper",
+                    "subscription_plan_code": "free",
+                },
+                format="json",
+            )
 
         self.assertEqual(response.status_code, 503)
         self.assertIn("Unable to deliver the verification email", str(response.data))

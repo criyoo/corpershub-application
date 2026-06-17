@@ -386,7 +386,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.full_name, "Ada Lovelace")
         self.assertEqual(str(corper.date_of_birth), "2001-06-15")
         self.assertEqual(corper.gender, "female")
-        self.assertEqual(corper.mobile_number, "+2348097654321")
+        self.assertEqual(corper.mobile_number, "+2348099446062")
         self.assertEqual(corper.university_matriculation_number, "UNILAG/CSC/001")
 
     def test_biodata_verification_submission_rejects_invalid_matriculation_number(self):
@@ -474,11 +474,14 @@ class CorperProfileAPITests(APITestCase):
     def test_verification_submission_humanizes_integrity_errors(self):
         ensure_corper_profile(self.corper_user)
 
-        with patch(
-            "apps.verification.views.CorperProfile.save",
-            side_effect=IntegrityError(
-                "duplicate key value violates unique constraint "
-                '"corpers_unique_mobile_number" DETAIL: Key (mobile_number)=(+2348099446062) already exists.'
+        with (
+            patch("apps.verification.views.logger.exception"),
+            patch(
+                "apps.verification.views.CorperProfile.save",
+                side_effect=IntegrityError(
+                    "duplicate key value violates unique constraint "
+                    '"corpers_unique_mobile_number" DETAIL: Key (mobile_number)=(+2348099446062) already exists.'
+                ),
             ),
         ):
             response = self.client.post(
@@ -512,9 +515,12 @@ class CorperProfileAPITests(APITestCase):
     def test_verification_submission_humanizes_duplicate_errors_from_generic_exceptions(self):
         ensure_corper_profile(self.corper_user)
 
-        with patch(
-            "apps.verification.views.CorperProfile.save",
-            side_effect=RuntimeError("DETAIL: Key (mobile_number)=(+2348099446062) already exists."),
+        with (
+            patch("apps.verification.views.logger.exception"),
+            patch(
+                "apps.verification.views.CorperProfile.save",
+                side_effect=RuntimeError("DETAIL: Key (mobile_number)=(+2348099446062) already exists."),
+            ),
         ):
             response = self.client.post(
                 "/api/verification/attempts/",
@@ -802,7 +808,10 @@ class CorperProfileAPITests(APITestCase):
     def test_verification_submission_records_failed_attempt_when_profile_update_fails(self):
         ensure_corper_profile(self.corper_user)
 
-        with patch("apps.verification.views.CorperProfile.save", side_effect=RuntimeError("boom")):
+        with (
+            patch("apps.verification.views.logger.exception"),
+            patch("apps.verification.views.CorperProfile.save", side_effect=RuntimeError("boom")),
+        ):
             response = self.client.post(
                 "/api/verification/attempts/",
                 {

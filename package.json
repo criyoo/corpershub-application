@@ -13,6 +13,7 @@
     "test:web": "npm -w apps/web run test"
   },
   "dependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "whatwg-encoding": "file:packages/whatwg-encoding"
   }
 }

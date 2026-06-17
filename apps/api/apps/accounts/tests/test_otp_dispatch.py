@@ -40,15 +40,17 @@ class OTPDispatchTests(SimpleTestCase):
         side_effect=RuntimeError("queue unavailable"),
     )
     def test_dispatch_raises_service_error_when_queueing_fails(self, _delay_mock):
-        with self.assertRaises(OTPEmailDeliveryError):
-            dispatch_otp_email(email="corper@example.com", code="A1B2C3", purpose="signup")
+        with patch("apps.accounts.services.logger.exception"):
+            with self.assertRaises(OTPEmailDeliveryError):
+                dispatch_otp_email(email="corper@example.com", code="A1B2C3", purpose="signup")
 
     @override_settings(OTP_EMAIL_ASYNC=False)
     @patch("apps.accounts.services.deliver_otp_email")
     def test_dispatch_raises_service_error_when_sync_delivery_fails(self, send_email_mock):
         send_email_mock.side_effect = smtplib.SMTPAuthenticationError(535, b"5.7.8 Error: authentication failed")
-        with self.assertRaises(OTPEmailDeliveryError):
-            dispatch_otp_email(email="corper@example.com", code="A1B2C3", purpose="signup")
+        with patch("apps.accounts.services.logger.exception"):
+            with self.assertRaises(OTPEmailDeliveryError):
+                dispatch_otp_email(email="corper@example.com", code="A1B2C3", purpose="signup")
 
     @override_settings(
         OTP_EMAIL_FALLBACK_ENABLED=True,

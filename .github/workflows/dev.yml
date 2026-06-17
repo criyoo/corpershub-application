@@ -73,16 +73,17 @@ jobs:
 
       - name: Install backend dependencies
         run: |
+          cd apps/api
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r apps/api/requirements.txt
+          pip install -r requirements.txt
 
-      # - name: Run backend tests
-      #   run: |
-      #     source .venv/bin/activate
-      #     cd apps/api
-      #     python manage.py test --settings=config.settings.test
+      - name: Run backend tests
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          python manage.py test --settings=config.settings.test
 
 
   deploy-api:
@@ -127,7 +128,9 @@ jobs:
             apps/web/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
 
       - name: Lint frontend
         run: npm run lint --workspace apps/web
@@ -153,7 +156,9 @@ jobs:
             apps/web/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
 
       - name: Test frontend
         run: npm run test --workspace apps/web
@@ -176,7 +181,9 @@ jobs:
             apps/web/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
 
       - name: Build frontend
         run: npm run build --workspace apps/web
