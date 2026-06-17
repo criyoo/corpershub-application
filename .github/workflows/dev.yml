@@ -1,9 +1,9 @@
-name: Deploy Development
+name: Deploy development
 
 on:
   push:
     branches:
-      - main
+      - development
   workflow_dispatch:
 
 permissions:
@@ -23,20 +23,18 @@ env:
   PYTHON_VERSION: "3.12"
 
 jobs:
-  test-api:
+  lint-api:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     environment: development
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: .
-      - uses: docker/setup-qemu-action@v3
-        with:
-          platforms: "${{ env.LINUX_PLATFORM }}"
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "${{ env.PYTHON_VERSION }}" 
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
 
       - name: Install backend dependencies
         run: |
@@ -44,16 +42,49 @@ jobs:
           source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r apps/api/requirements.txt
+
       - name: Check migrations
         run: |
+          source .venv/bin/activate
           cd apps/api
           python manage.py makemigrations --check --dry-run --settings=config.settings.test
-      # - name: Run backend tests
-      #   run: |
-      #     cd apps/api
-      #     python manage.py test --settings=config.settings.test
 
-      
+      - name: Lint backend
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          flake8 .
+          ruff check .
+
+
+  test-api:
+    needs: lint-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+
+      - name: Run backend tests
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          python manage.py test --settings=config.settings.test
+
+
   deploy-api:
     needs: test-api
     runs-on: ubuntu-latest
@@ -61,20 +92,6 @@ jobs:
     environment: development
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "${{ env.PYTHON_VERSION }}" 
-
-      - name: Install backend dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r apps/api/requirements.txt
-
-      - name: Check migrations
-        run: |
-          cd apps/api
-          python manage.py makemigrations --check --dry-run --settings=config.settings.test
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -92,10 +109,11 @@ jobs:
         run: sleep 10
 
 
-  deploy-web:
+      
+  lint-web:
     needs: deploy-api
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     environment: development
     steps:
       - uses: actions/checkout@v4
@@ -117,11 +135,80 @@ jobs:
       - name: Typecheck frontend
         run: npm run typecheck --workspace apps/web
 
+
+  test-web:
+    needs: lint-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
       - name: Test frontend
         run: npm run test --workspace apps/web
 
+
+  build-web:
+    needs: test-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
       - name: Build frontend
         run: npm run build --workspace apps/web
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: |
+            apps/web/.next
+            apps/web/public
+            apps/web/package.json
+            apps/web/next.config.*
+            package.json
+            package-lock.json
+          retention-days: 1
+          include-hidden-files: true
+
+
+  deploy-web:
+    needs: build-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download web build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
