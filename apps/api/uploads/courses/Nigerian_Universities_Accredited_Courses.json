@@ -1,0 +1,132 @@
+{
+  "title": "Consolidated List of Accredited Courses in Nigerian Universities",
+  "description": "Duplicate courses across universities are listed once and grouped by academic fields.",
+  "fields": {
+    "Agriculture & Veterinary Sciences": [
+      "Agriculture",
+      "Agricultural Economics",
+      "Agricultural Extension",
+      "Agronomy",
+      "Animal Science",
+      "Crop Science",
+      "Soil Science",
+      "Fisheries & Aquaculture",
+      "Forestry",
+      "Food Science & Technology",
+      "Veterinary Medicine",
+      "Veterinary Anatomy",
+      "Veterinary Physiology"
+    ],
+    "Arts & Humanities": [
+      "English Language",
+      "English & Literary Studies",
+      "Linguistics",
+      "French",
+      "Arabic Studies",
+      "History",
+      "Philosophy",
+      "Religious Studies",
+      "Theatre Arts",
+      "Music",
+      "Fine Arts"
+    ],
+    "Education": [
+      "Education",
+      "Educational Management",
+      "Guidance & Counselling",
+      "Special Education",
+      "Adult Education",
+      "Technical Education",
+      "Education & Mathematics",
+      "Education & Biology",
+      "Education & English"
+    ],
+    "Engineering & Technology": [
+      "Civil Engineering",
+      "Mechanical Engineering",
+      "Electrical & Electronics Engineering",
+      "Chemical Engineering",
+      "Petroleum Engineering",
+      "Computer Engineering",
+      "Software Engineering",
+      "Information Technology",
+      "Cyber Security",
+      "Architecture"
+    ],
+    "Environmental Sciences": [
+      "Estate Management",
+      "Quantity Surveying",
+      "Urban & Regional Planning",
+      "Surveying & Geoinformatics",
+      "Environmental Science"
+    ],
+    "Law": [
+      "Law",
+      "Common & Islamic Law",
+      "Commercial Law",
+      "Public Law",
+      "Private & Property Law"
+    ],
+    "Medical & Health Sciences": [
+      "Medicine & Surgery",
+      "Dentistry",
+      "Nursing Science",
+      "Physiotherapy",
+      "Radiography",
+      "Medical Laboratory Science",
+      "Optometry",
+      "Pharmacy",
+      "Public Health"
+    ],
+    "Natural & Applied Sciences": [
+      "Biology",
+      "Biochemistry",
+      "Microbiology",
+      "Biotechnology",
+      "Physics",
+      "Chemistry",
+      "Industrial Chemistry",
+      "Mathematics",
+      "Statistics",
+      "Geology",
+      "Computer Science",
+      "Artificial Intelligence",
+      "Data Science"
+    ],
+    "Social Sciences": [
+      "Economics",
+      "Political Science",
+      "International Relations",
+      "Public Administration",
+      "Psychology",
+      "Sociology",
+      "Mass Communication",
+      "Journalism",
+      "Criminology"
+    ],
+    "Management Sciences & Business": [
+      "Accounting",
+      "Banking & Finance",
+      "Business Administration",
+      "Marketing",
+      "Entrepreneurship",
+      "Insurance",
+      "Human Resource Management",
+      "Office Technology & Management"
+    ],
+    "Specialized & Emerging Fields": [
+      "Renewable Energy Engineering",
+      "Robotics Engineering",
+      "Forensic Science",
+      "Climate Science",
+      "Maritime Studies",
+      "Aviation Management"
+    ]
+  },
+  "notes": [
+    "Accreditation status may change periodically based on NUC accreditation reviews.",
+    "Some universities may use slightly different names for similar programmes.",
+    "Professional programmes such as Law, Medicine, Engineering, and Pharmacy may require additional regulatory approvals.",
+    "Not every university offers every course listed in this document."
+  ]
+}
