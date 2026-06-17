@@ -53,7 +53,7 @@ jobs:
         run: |
           source .venv/bin/activate
           cd apps/api
-          flake8 .
+          ruff format .
           ruff check .
 
 
