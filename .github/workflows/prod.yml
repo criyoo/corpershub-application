@@ -103,7 +103,7 @@ jobs:
           platforms: ${{ env.LINUX_PLATFORM }}
 
       - name: Deploy API
-        run: bash scripts/deploy/api.sh pro
+        run: bash scripts/deploy/api.sh prod
 
       - name: Wait for API to be ready
         run: sleep 10
@@ -218,4 +218,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Web
-        run: bash scripts/deploy/web.sh pro
+        run: bash scripts/deploy/web.sh prod

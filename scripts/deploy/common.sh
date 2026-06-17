@@ -20,7 +20,7 @@ require_cmd() {
 }
 
 set_environment_defaults() {
-  ENVIRONMENT="${1:-${ENVIRONMENT:-dev}}"
+  ENVIRONMENT="${1:-dev}"
   export ENVIRONMENT
 
   if [[ "$ENVIRONMENT" == "prod" ]]; then

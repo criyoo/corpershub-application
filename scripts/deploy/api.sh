@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-ENVIRONMENT="${1:-${ENVIRONMENT:-dev}}"
+ENVIRONMENT="${1:-dev}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"

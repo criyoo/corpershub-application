@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/deploy" && pwd)/common.sh"
 
-set_environment_defaults "${1:-}"
+set_environment_defaults "${1:-dev}"
 set_aws_auth_mode
 
 require_cmd python3

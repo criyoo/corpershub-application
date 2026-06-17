@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-set_environment_defaults "${1:-}"
+set_environment_defaults "${1:-dev}"
 set_aws_auth_mode
 
 [ -d "${WEB_DIR}" ] || fail "Missing web directory: ${WEB_DIR}"
@@ -28,7 +28,6 @@ invalidate_cloudfront() {
     --paths "/*" >/dev/null
 }
 
-# ensure_aws_auth
 
 if [ "${INVALIDATE_ONLY}" = "1" ]; then
   invalidate_cloudfront
