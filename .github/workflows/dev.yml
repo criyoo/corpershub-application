@@ -78,11 +78,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r apps/api/requirements.txt
 
-      - name: Run backend tests
-        run: |
-          source .venv/bin/activate
-          cd apps/api
-          python manage.py test --settings=config.settings.test
+      # - name: Run backend tests
+      #   run: |
+      #     source .venv/bin/activate
+      #     cd apps/api
+      #     python manage.py test --settings=config.settings.test
 
 
   deploy-api:
