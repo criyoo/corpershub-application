@@ -1,5 +1,6 @@
-from django.conf import settings
 import logging
+
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import permissions, status
@@ -7,9 +8,6 @@ from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-logger = logging.getLogger(__name__)
-
 from apps.accounts.account_lifecycle import (
     REACTIVATION_PROMPT_MESSAGE,
     build_reactivation_path,
@@ -46,8 +44,12 @@ from apps.adminpanel.services import (
 )
 from apps.audit.services import log_audit_event
 
+logger = logging.getLogger(__name__)
 
-def _set_refresh_cookie(response: Response, refresh_token: str, max_age: int | None = None, remember: bool = False) -> Response:
+
+def _set_refresh_cookie(
+    response: Response, refresh_token: str, max_age: int | None = None, remember: bool = False
+) -> Response:
     response.set_cookie(
         settings.AUTH_REFRESH_COOKIE_NAME,
         refresh_token,
@@ -142,7 +144,7 @@ class AdminRegisterVerifyAPIView(GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        otp = consume_valid_otp(email=normalized_email, code=code, purpose=EmailOTP.Purpose.SIGNUP)
+        consume_valid_otp(email=normalized_email, code=code, purpose=EmailOTP.Purpose.SIGNUP)
 
         first_admin = get_primary_admin_user()
         admin_request = None
@@ -166,9 +168,7 @@ class AdminRegisterVerifyAPIView(GenericAPIView):
                 )
 
             pending_signup.delete()
-            EmailOTP.objects.filter(
-                email=normalized_email, purpose=EmailOTP.Purpose.SIGNUP
-            ).delete()
+            EmailOTP.objects.filter(email=normalized_email, purpose=EmailOTP.Purpose.SIGNUP).delete()
 
             return Response(
                 {
@@ -199,7 +199,11 @@ class AdminRegisterVerifyAPIView(GenericAPIView):
             except Exception:
                 logger.exception(
                     "Unable to send admin registration request notification",
-                    extra={"request_id": str(admin_request.id), "email": admin_request.email, "admin_email": first_admin.email},
+                    extra={
+                        "request_id": str(admin_request.id),
+                        "email": admin_request.email,
+                        "admin_email": first_admin.email,
+                    },
                 )
             else:
                 admin_request.notification_sent_at = timezone.now()

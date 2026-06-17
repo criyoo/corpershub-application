@@ -1,6 +1,4 @@
-TAX_IDENTIFICATION_NUMBER_VALIDATION_MESSAGE = (
-    "Enter a valid tax identification number with 10 to 13 digits."
-)
+TAX_IDENTIFICATION_NUMBER_VALIDATION_MESSAGE = "Enter a valid tax identification number with 10 to 13 digits."
 
 
 def normalize_tax_identification_number(value):

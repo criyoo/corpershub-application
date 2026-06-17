@@ -161,7 +161,5 @@ class InitiateConversationSerializer(serializers.Serializer):
         ]
         provided_count = sum(1 for identifier in identifiers if identifier)
         if provided_count != 1:
-            raise serializers.ValidationError(
-                "Provide exactly one of corper_id, company_id, or interest_id."
-            )
+            raise serializers.ValidationError("Provide exactly one of corper_id, company_id, or interest_id.")
         return attrs

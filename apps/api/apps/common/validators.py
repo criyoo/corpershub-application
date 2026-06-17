@@ -137,40 +137,26 @@ def validate_nigerian_mobile_number(
                 f"Enter a valid {field_label.lower()} using only digits and an optional leading +."
             )
         if not mobile_number.startswith("+234"):
-            raise serializers.ValidationError(
-                f"Enter a valid Nigerian {field_label.lower()} starting with +234."
-            )
+            raise serializers.ValidationError(f"Enter a valid Nigerian {field_label.lower()} starting with +234.")
         if len(mobile_number) != 14:
-            raise serializers.ValidationError(
-                f"Numbers starting with +234 must contain 13 digits excluding the +."
-            )
+            raise serializers.ValidationError("Numbers starting with +234 must contain 13 digits excluding the +.")
         local_number = f"0{mobile_number[4:]}"
     else:
         if require_international_format:
-            raise serializers.ValidationError(
-                f"Enter a valid Nigerian {field_label.lower()} starting with +234."
-            )
+            raise serializers.ValidationError(f"Enter a valid Nigerian {field_label.lower()} starting with +234.")
         if not mobile_number.isdigit():
-            raise serializers.ValidationError(
-                f"Enter a valid {field_label.lower()} using digits only."
-            )
+            raise serializers.ValidationError(f"Enter a valid {field_label.lower()} using digits only.")
         if not mobile_number.startswith("0"):
-            raise serializers.ValidationError(
-                f"Enter a valid Nigerian {field_label.lower()} starting with 0 or +234."
-            )
+            raise serializers.ValidationError(f"Enter a valid Nigerian {field_label.lower()} starting with 0 or +234.")
         if len(mobile_number) != 11:
-            raise serializers.ValidationError(
-                "Numbers starting with 0 must contain 11 digits."
-            )
+            raise serializers.ValidationError("Numbers starting with 0 must contain 11 digits.")
         local_number = mobile_number
 
     if len(local_number) != 11:
         raise serializers.ValidationError("Enter a valid Nigerian mobile number.")
 
     if not any(local_number.startswith(prefix) for prefix in NIGERIAN_MOBILE_PREFIXES):
-        raise serializers.ValidationError(
-            "Enter a valid Nigerian mobile number with a supported network prefix."
-        )
+        raise serializers.ValidationError("Enter a valid Nigerian mobile number with a supported network prefix.")
 
     return mobile_number
 
@@ -197,9 +183,7 @@ def validate_nysc_callup_number(value: str | None) -> str:
     if not callup_number:
         raise serializers.ValidationError("NYSC Call-up Number is required.")
     if not NYSC_CALLUP_NUMBER_RE.fullmatch(callup_number):
-        raise serializers.ValidationError(
-            "NYSC Call-up Number must match the format NYSC/ABC/2024/1234."
-        )
+        raise serializers.ValidationError("NYSC Call-up Number must match the format NYSC/ABC/2024/1234.")
     return callup_number
 
 
@@ -212,15 +196,11 @@ def validate_nysc_state_code(value: str | None) -> str:
     if not state_code:
         raise serializers.ValidationError("NYSC State Code is required.")
     if not NYSC_STATE_CODE_RE.fullmatch(state_code):
-        raise serializers.ValidationError(
-            "NYSC State Code must match the format NYSC/AB/23A/0123."
-        )
+        raise serializers.ValidationError("NYSC State Code must match the format NYSC/AB/23A/0123.")
 
     parts = state_code.split("/")
     if len(parts) != 4 or parts[1] not in NYSC_STATE_CODE_PREFIXES:
-        raise serializers.ValidationError(
-            "Enter a valid NYSC State Code using an official 2-letter state code."
-        )
+        raise serializers.ValidationError("Enter a valid NYSC State Code using an official 2-letter state code.")
 
     return state_code
 

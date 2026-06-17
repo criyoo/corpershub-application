@@ -13,6 +13,7 @@ from apps.subscriptions.constants import SUBSCRIPTION_PLAN_PRICES as billing_pla
 
 free, three, six, twelve = billing_plans.keys()
 
+
 class CompanyPrivacySearchTests(APITestCase):
     def setUp(self):
         self.corper_user = User.objects.create_user(

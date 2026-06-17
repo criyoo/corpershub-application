@@ -199,9 +199,7 @@ class VerificationAdminTests(TestCase):
             },
         )
 
-        response = self.client.get(
-            reverse("admin:verification_corperverification_change", args=[self.corper.pk])
-        )
+        response = self.client.get(reverse("admin:verification_corperverification_change", args=[self.corper.pk]))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Ada Lovelace")
@@ -222,9 +220,7 @@ class VerificationAdminTests(TestCase):
             },
         )
 
-        response = self.client.get(
-            reverse("admin:verification_corperverification_change", args=[self.corper.pk])
-        )
+        response = self.client.get(reverse("admin:verification_corperverification_change", args=[self.corper.pk]))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "View uploaded document")

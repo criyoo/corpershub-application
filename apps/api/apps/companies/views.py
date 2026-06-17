@@ -77,10 +77,7 @@ class CompanyVerificationAPIView(generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         company = self.get_object()
-        previous_values = {
-            field_name: getattr(company, field_name, None)
-            for field_name in self.verification_fields
-        }
+        previous_values = {field_name: getattr(company, field_name, None) for field_name in self.verification_fields}
 
         partial = kwargs.pop("partial", False)
         serializer = self.get_serializer(company, data=request.data, partial=partial)
@@ -89,8 +86,7 @@ class CompanyVerificationAPIView(generics.RetrieveUpdateAPIView):
 
         company.refresh_from_db()
         verification_fields_changed = any(
-            previous_values[field_name] != getattr(company, field_name, None)
-            for field_name in self.verification_fields
+            previous_values[field_name] != getattr(company, field_name, None) for field_name in self.verification_fields
         )
 
         if verification_fields_changed:
@@ -129,15 +125,10 @@ class MyCompanyProfileAPIView(generics.RetrieveUpdateAPIView):
         company = self.get_object()
         previous_verification_values = {
             "company_name": company.company_name,
-            "company_registration_number": normalize_company_registration_number(
-                company.company_registration_number
-            ),
+            "company_registration_number": normalize_company_registration_number(company.company_registration_number),
             "company_registration_date": company.company_registration_date,
         }
-        if (
-            company.approval_status == CompanyProfile.ApprovalStatus.APPROVED
-            and not self.is_verified_edit_mode()
-        ):
+        if company.approval_status == CompanyProfile.ApprovalStatus.APPROVED and not self.is_verified_edit_mode():
             disallowed_fields = set(request.data.keys()) - self.verified_editable_fields
             if disallowed_fields:
                 return Response(
@@ -162,10 +153,7 @@ class MyCompanyProfileAPIView(generics.RetrieveUpdateAPIView):
             != previous_verification_values["company_registration_number"]
             or company.company_registration_date != previous_verification_values["company_registration_date"]
         )
-        if (
-            company.approval_status == CompanyProfile.ApprovalStatus.APPROVED
-            and not verification_fields_changed
-        ):
+        if company.approval_status == CompanyProfile.ApprovalStatus.APPROVED and not verification_fields_changed:
             return Response(self.get_serializer(company).data)
 
         if verification_fields_changed:
@@ -209,9 +197,7 @@ class CompanyDirectoryDetailAPIView(generics.RetrieveAPIView):
             enforce_browse_access(user=self.request.user)
             queryset = queryset.filter(
                 verification_status=CompanyProfile.VerificationStatus.VERIFIED,
-            ).filter(
-                CompanyProfile.directory_visibility_q()
-            )
+            ).filter(CompanyProfile.directory_visibility_q())
         return queryset
 
     def retrieve(self, request, *args, **kwargs):
@@ -234,11 +220,7 @@ class CompanyProfileSubmitAPIView(APIView):
         company = ensure_company_profile(request.user)
         if not company.verification_fields_complete:
             return Response(
-                {
-                    "detail": (
-                        "Complete the company verification fields before submitting your legal documents."
-                    )
-                },
+                {"detail": ("Complete the company verification fields before submitting your legal documents.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

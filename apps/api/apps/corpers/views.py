@@ -10,7 +10,6 @@ from apps.corpers.models import CorperProfile
 from apps.corpers.serializers import (
     CorperAdminSerializer,
     CorperAdminVerificationSerializer,
-    CorperDirectorySerializer,
     CorperDirectoryDetailSerializer,
     CorperProfileSerializer,
     CorperProfileSubmissionSerializer,
@@ -78,11 +77,7 @@ class MyCorperProfileAPIView(generics.RetrieveUpdateAPIView):
             )
         if not corper.terms_accepted:
             return Response(
-                {
-                    "detail": (
-                        "Accept every required legal document before editing your corper profile."
-                    )
-                },
+                {"detail": ("Accept every required legal document before editing your corper profile.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

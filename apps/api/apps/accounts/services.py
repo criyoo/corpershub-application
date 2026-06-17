@@ -178,15 +178,11 @@ def archive_deleted_user(*, user: User) -> DeletedAccount:
 
 def validate_company_registration_email(email: str) -> None:
     domain = email.split("@")[-1].lower()
-    denylisted = EmailDomainRule.objects.filter(
-        domain=domain, rule_type=EmailDomainRule.RuleType.DENYLIST
-    ).exists()
+    denylisted = EmailDomainRule.objects.filter(domain=domain, rule_type=EmailDomainRule.RuleType.DENYLIST).exists()
     if denylisted:
         raise ValidationError("This company email domain is not allowed.")
 
-    allowlisted = EmailDomainRule.objects.filter(
-        domain=domain, rule_type=EmailDomainRule.RuleType.ALLOWLIST
-    ).exists()
+    allowlisted = EmailDomainRule.objects.filter(domain=domain, rule_type=EmailDomainRule.RuleType.ALLOWLIST).exists()
     testing_exception = domain in getattr(settings, "COMPANY_EMAIL_TEST_ALLOWLIST", set())
     if domain in settings.FREE_EMAIL_PROVIDERS and not allowlisted and not testing_exception:
         raise ValidationError("Companies must register with a custom-domain email address.")

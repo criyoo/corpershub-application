@@ -434,7 +434,7 @@ class AuthAPITests(APITestCase):
             role=User.Role.CORPER,
             email_verified=True,
         )
-        otp = EmailOTP.issue_code(
+        EmailOTP.issue_code(
             email=user.email,
             purpose=EmailOTP.Purpose.PASSWORD_RESET,
             user=user,
@@ -525,9 +525,7 @@ class AuthAPITests(APITestCase):
         "apps.accounts.services.send_otp_email_task.delay",
         side_effect=RuntimeError("queue unavailable"),
     )
-    def test_corper_registration_returns_service_unavailable_when_otp_queueing_fails(
-        self, _send_email_mock
-    ):
+    def test_corper_registration_returns_service_unavailable_when_otp_queueing_fails(self, _send_email_mock):
         response = self.client.post(
             "/api/auth/register/",
             {
@@ -577,8 +575,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="corper@example.ng", purpose="signup")
-
         response = self.client.post(
             "/api/auth/verify-email/",
             {"email": "corper@example.ng", "code": TEST_OTP_CODE},
@@ -604,8 +600,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="paidcorper@example.ng", purpose="signup")
-
         response = self.client.post(
             "/api/auth/verify-email/",
             {"email": "paidcorper@example.ng", "code": TEST_OTP_CODE},
@@ -631,8 +625,6 @@ class AuthAPITests(APITestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertFalse(User.objects.filter(email="owner@brightfuture.ng").exists())
-        otp = EmailOTP.objects.get(email="owner@brightfuture.ng", purpose="signup")
-
         verify_response = self.client.post(
             "/api/auth/verify-email/",
             {"email": "owner@brightfuture.ng", "code": TEST_OTP_CODE},
@@ -684,7 +676,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="corper@example.ng", purpose="signup")
         self.client.post(
             "/api/auth/verify-email/",
             {"email": "corper@example.ng", "code": TEST_OTP_CODE},
@@ -715,7 +706,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="corper@example.ng", purpose="signup")
         self.client.post(
             "/api/auth/verify-email/",
             {"email": "corper@example.ng", "code": TEST_OTP_CODE},
@@ -762,7 +752,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="company@example.ng", purpose="signup")
         self.client.post(
             "/api/auth/verify-email/",
             {"email": "company@example.ng", "code": TEST_OTP_CODE},
@@ -825,7 +814,6 @@ class AuthAPITests(APITestCase):
             },
             format="json",
         )
-        otp = EmailOTP.objects.get(email="verified-company@example.ng", purpose="signup")
         self.client.post(
             "/api/auth/verify-email/",
             {"email": "verified-company@example.ng", "code": TEST_OTP_CODE},
@@ -1090,7 +1078,7 @@ class AccountSettingsAPITests(APITestCase):
         )
 
         self.assertEqual(request_response.status_code, 200)
-        otp = EmailOTP.objects.get(
+        EmailOTP.objects.get(
             email="company@example.ng",
             purpose=EmailOTP.Purpose.COMPANY_PASSWORD_CHANGE,
         )
@@ -1123,7 +1111,7 @@ class AccountSettingsAPITests(APITestCase):
         )
 
         self.assertEqual(request_response.status_code, 200)
-        otp = EmailOTP.objects.get(
+        EmailOTP.objects.get(
             email="company+new@example.ng",
             purpose=EmailOTP.Purpose.COMPANY_EMAIL_CHANGE,
         )
@@ -1157,7 +1145,7 @@ class AccountSettingsAPITests(APITestCase):
         )
 
         self.assertEqual(request_response.status_code, 200)
-        otp = EmailOTP.objects.get(
+        EmailOTP.objects.get(
             email="company@example.ng",
             purpose=EmailOTP.Purpose.COMPANY_MOBILE_CHANGE,
         )
@@ -1258,7 +1246,7 @@ class AccountSettingsAPITests(APITestCase):
         )
 
         self.assertEqual(request_response.status_code, 200)
-        otp = EmailOTP.objects.get(
+        EmailOTP.objects.get(
             email="company@example.ng",
             purpose=EmailOTP.Purpose.COMPANY_DELETE_ACCOUNT,
         )

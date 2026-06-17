@@ -18,9 +18,7 @@ class PaymentTransaction(UUIDPrimaryKeyModel):
         EXPIRED = "expired", "Expired"
         ABANDONED = "abandoned", "Abandoned"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_transactions"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_transactions")
     subscription = models.ForeignKey(
         "subscriptions.UserSubscription",
         null=True,
@@ -53,9 +51,7 @@ class PaymentWebhookEvent(UUIDPrimaryKeyModel):
     event_type = models.CharField(max_length=120)
     signature = models.CharField(max_length=255, blank=True)
     payload = models.JSONField(default=dict, blank=True)
-    process_status = models.CharField(
-        max_length=20, choices=ProcessStatus.choices, default=ProcessStatus.RECEIVED
-    )
+    process_status = models.CharField(max_length=20, choices=ProcessStatus.choices, default=ProcessStatus.RECEIVED)
     processed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

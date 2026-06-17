@@ -1,12 +1,9 @@
-from datetime import timedelta
-
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.corpers.models import CorperProfile
 from apps.corpers.services import ensure_corper_profile
-from apps.subscriptions.services import ensure_trial_subscription
 
 
 class CorperPrivacySearchTests(APITestCase):

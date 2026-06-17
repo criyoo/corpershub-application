@@ -207,9 +207,7 @@ class EmailOTP(UUIDPrimaryKeyModel):
         expiry_seconds: int | None = None,
     ):
         existing = (
-            cls.objects.filter(email=email, purpose=purpose, consumed_at__isnull=True)
-            .order_by("-created_at")
-            .first()
+            cls.objects.filter(email=email, purpose=purpose, consumed_at__isnull=True).order_by("-created_at").first()
         )
         now = timezone.now()
         resend_window_seconds = resend_window_seconds or settings.OTP_RESEND_WINDOW_SECONDS

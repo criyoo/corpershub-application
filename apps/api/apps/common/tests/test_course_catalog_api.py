@@ -40,9 +40,7 @@ class CourseCatalogAPITests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        field_payload = next(
-            field for field in payload["fields"] if field["id"] == str(self.course_field.id)
-        )
+        field_payload = next(field for field in payload["fields"] if field["id"] == str(self.course_field.id))
 
         self.assertEqual(
             field_payload,

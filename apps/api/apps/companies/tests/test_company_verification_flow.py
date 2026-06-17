@@ -135,7 +135,9 @@ class CompanyVerificationFlowTests(APITestCase):
             format="json",
         )
 
-        with patch("apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"}):
+        with patch(
+            "apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"}
+        ):
             response = self.client.post(
                 "/api/companies/me/submit/",
                 {

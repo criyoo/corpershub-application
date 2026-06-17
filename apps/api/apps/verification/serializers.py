@@ -55,9 +55,7 @@ class VerificationSubmissionSerializer(serializers.Serializer):
         first_name = " ".join(str(attrs.get("first_name", "")).split())
         middle_name = " ".join(str(attrs.get("middle_name", "")).split())
         surname = " ".join(str(attrs.get("surname", "")).split())
-        university_matriculation_number = str(
-            attrs.get("university_matriculation_number", "")
-        ).strip()
+        university_matriculation_number = str(attrs.get("university_matriculation_number", "")).strip()
         state_of_origin = " ".join(str(attrs.get("state_of_origin", "")).split())
         country_of_birth = " ".join(str(attrs.get("country_of_birth", "")).split())
         document = attrs.get("document")
@@ -70,11 +68,15 @@ class VerificationSubmissionSerializer(serializers.Serializer):
                 middle_name = " ".join(name_parts[1:-1]) if len(name_parts) > 2 else ""
         full_name = " ".join(part for part in (first_name, middle_name, surname) if part)
 
-        if verification_type in {
-            VerificationAttempt.VerificationType.NIN,
-            VerificationAttempt.VerificationType.CALLUP,
-            VerificationAttempt.VerificationType.STATE_CODE,
-        } and not submitted_value:
+        if (
+            verification_type
+            in {
+                VerificationAttempt.VerificationType.NIN,
+                VerificationAttempt.VerificationType.CALLUP,
+                VerificationAttempt.VerificationType.STATE_CODE,
+            }
+            and not submitted_value
+        ):
             raise serializers.ValidationError({"submitted_value": "This value is required."})
         if verification_type == VerificationAttempt.VerificationType.BIODATA:
             errors = {}
@@ -90,10 +92,14 @@ class VerificationSubmissionSerializer(serializers.Serializer):
                 errors["mobile_number"] = "This value is required."
             if errors:
                 raise serializers.ValidationError(errors)
-        if verification_type in {
-            VerificationAttempt.VerificationType.CALLUP,
-            VerificationAttempt.VerificationType.STATE_CODE,
-        } and not document:
+        if (
+            verification_type
+            in {
+                VerificationAttempt.VerificationType.CALLUP,
+                VerificationAttempt.VerificationType.STATE_CODE,
+            }
+            and not document
+        ):
             raise serializers.ValidationError({"document": "Upload the NYSC document."})
 
         if verification_type == VerificationAttempt.VerificationType.BIODATA:
@@ -122,9 +128,7 @@ class VerificationSubmissionSerializer(serializers.Serializer):
         except serializers.ValidationError as exc:
             if verification_type == VerificationAttempt.VerificationType.BIODATA:
                 if university_matriculation_number:
-                    raise serializers.ValidationError(
-                        {"university_matriculation_number": exc.detail}
-                    ) from exc
+                    raise serializers.ValidationError({"university_matriculation_number": exc.detail}) from exc
                 raise serializers.ValidationError({"detail": exc.detail}) from exc
             raise serializers.ValidationError({"submitted_value": exc.detail}) from exc
 

@@ -56,9 +56,7 @@ class CorperProfile(UUIDPrimaryKeyModel):
         VERIFIED = "verified", "Verified"
         REJECTED = "rejected", "Rejected"
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="corper_profile"
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="corper_profile")
     full_name = models.CharField(max_length=255)
     first_name = models.CharField(max_length=120, blank=True, default="")
     middle_name = models.CharField(max_length=120, blank=True, default="")
@@ -368,9 +366,7 @@ class CorperProfile(UUIDPrimaryKeyModel):
     @property
     def terms_accepted(self) -> bool:
         if self.legal_acceptances:
-            return has_accepted_all_required_legal_documents(
-                self.legal_acceptances, CORPER_LEGAL_DOCUMENT_SLUGS
-            )
+            return has_accepted_all_required_legal_documents(self.legal_acceptances, CORPER_LEGAL_DOCUMENT_SLUGS)
         return bool(self.terms_of_agreement_accepted_at and self.terms_of_use_accepted_at)
 
     @property
@@ -383,13 +379,18 @@ class CorperProfile(UUIDPrimaryKeyModel):
         update_fields_set = set(update_fields) if update_fields is not None else None
         previous_statuses = None
         if self.pk and not skip_attempt_sync:
-            previous_statuses = type(self).objects.filter(pk=self.pk).values(
-                "verification_status",
-                "biodata_verification_status",
-                "nin_verification_status",
-                "nysc_callup_verification_status",
-                "nysc_state_code_verification_status",
-            ).first()
+            previous_statuses = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values(
+                    "verification_status",
+                    "biodata_verification_status",
+                    "nin_verification_status",
+                    "nysc_callup_verification_status",
+                    "nysc_state_code_verification_status",
+                )
+                .first()
+            )
         self.first_name = " ".join(str(self.first_name or "").split())
         self.middle_name = " ".join(str(self.middle_name or "").split())
         self.surname = " ".join(str(self.surname or "").split())
@@ -397,9 +398,7 @@ class CorperProfile(UUIDPrimaryKeyModel):
         self.country_of_birth = " ".join(str(self.country_of_birth or "").split())
         self.full_name = " ".join(str(self.full_name or "").split())
         if self.first_name or self.middle_name or self.surname:
-            self.full_name = " ".join(
-                part for part in (self.first_name, self.middle_name, self.surname) if part
-            )
+            self.full_name = " ".join(part for part in (self.first_name, self.middle_name, self.surname) if part)
         elif self.full_name:
             name_parts = self.full_name.split()
             if name_parts:

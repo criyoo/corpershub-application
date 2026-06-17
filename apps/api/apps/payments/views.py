@@ -64,9 +64,7 @@ class InitiatePaymentAPIView(APIView):
             )
         serializer = InitiatePaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        plan = get_object_or_404(
-            SubscriptionPlan, code=serializer.validated_data["plan_code"], is_active=True
-        )
+        plan = get_object_or_404(SubscriptionPlan, code=serializer.validated_data["plan_code"], is_active=True)
         if plan.applies_to not in {request.user.role, "both"} and request.user.role != "admin":
             return Response({"detail": "This plan is not available for your account type."}, status=403)
         if plan.price_kobo == 0:
@@ -129,9 +127,7 @@ class InitiatePaymentAPIView(APIView):
                 metadata={
                     "is_upgrade": transition.is_upgrade,
                     "previous_subscription_id": (
-                        str(transition.previous_subscription.id)
-                        if transition.previous_subscription is not None
-                        else ""
+                        str(transition.previous_subscription.id) if transition.previous_subscription is not None else ""
                     ),
                 },
             )
@@ -160,9 +156,7 @@ class ReactivationPaymentAPIView(APIView):
         user = serializer.validated_data["user"]
         if user.role != "corper":
             return Response({"detail": "Only corper accounts can be reactivated through billing."}, status=403)
-        plan = get_object_or_404(
-            SubscriptionPlan, code=serializer.validated_data["plan_code"], is_active=True
-        )
+        plan = get_object_or_404(SubscriptionPlan, code=serializer.validated_data["plan_code"], is_active=True)
         if plan.applies_to not in {user.role, "both"}:
             return Response({"detail": "This plan is not available for your account type."}, status=403)
         if plan.price_kobo == 0:
@@ -209,9 +203,7 @@ class ReactivationPaymentAPIView(APIView):
                 metadata={
                     "is_upgrade": transition.is_upgrade,
                     "previous_subscription_id": (
-                        str(transition.previous_subscription.id)
-                        if transition.previous_subscription is not None
-                        else ""
+                        str(transition.previous_subscription.id) if transition.previous_subscription is not None else ""
                     ),
                 },
             )
@@ -264,11 +256,7 @@ class FlutterwaveTransactionVerifyAPIView(APIView):
     authentication_classes = []
 
     def get(self, request, *args, **kwargs):
-        reference = (
-            request.query_params.get("tx_ref")
-            or request.query_params.get("reference")
-            or ""
-        ).strip()
+        reference = (request.query_params.get("tx_ref") or request.query_params.get("reference") or "").strip()
         transaction_id = normalize_provider_transaction_id(request.query_params.get("transaction_id"))
         provider_status = (request.query_params.get("status") or "").strip() or None
         if not reference:
@@ -295,11 +283,7 @@ class FlutterwaveRedirectAPIView(APIView):
     authentication_classes = []
 
     def get(self, request, *args, **kwargs):
-        reference = (
-            request.query_params.get("tx_ref")
-            or request.query_params.get("reference")
-            or ""
-        ).strip()
+        reference = (request.query_params.get("tx_ref") or request.query_params.get("reference") or "").strip()
         transaction_id = normalize_provider_transaction_id(request.query_params.get("transaction_id"))
         provider_status = (request.query_params.get("status") or "").strip() or None
         if not reference:

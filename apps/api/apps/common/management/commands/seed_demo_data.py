@@ -124,7 +124,9 @@ class Command(BaseCommand):
         )
         company.company_name = company_name
         company.company_registration_number = registration_number
-        company.company_registration_date = self.parse_date(profile_data.get("company_registration_date")) or timezone.now().date()
+        company.company_registration_date = (
+            self.parse_date(profile_data.get("company_registration_date")) or timezone.now().date()
+        )
         company.tax_identification_number = tax_identification_number
         company.company_location_state = self.clean_text(profile_data.get("state"))
         company.preferred_deployment_states = self.join_values(profile_data.get("preferred_state_of_deployment"))
@@ -183,9 +185,7 @@ class Command(BaseCommand):
         profile_data = entry.get("profile") or {}
         verification_data = entry.get("verification_information") or {}
         preferred_organization_data = (
-            profile_data.get("preferred_organisation")
-            or profile_data.get("prefered_organisation")
-            or {}
+            profile_data.get("preferred_organisation") or profile_data.get("prefered_organisation") or {}
         )
 
         full_name = self.clean_text(entry.get("full_name")) or seed_key.replace("_", " ").title()
@@ -284,10 +284,14 @@ class Command(BaseCommand):
         if not email:
             raise ValueError(f"Seed entry {seed_type}:{seed_key} is missing an email address.")
 
-        seed_record = SeededUser.objects.select_related("user").filter(
-            seed_type=seed_type,
-            seed_key=seed_key,
-        ).first()
+        seed_record = (
+            SeededUser.objects.select_related("user")
+            .filter(
+                seed_type=seed_type,
+                seed_key=seed_key,
+            )
+            .first()
+        )
         if preferred_user is not None:
             user = preferred_user
             created = False

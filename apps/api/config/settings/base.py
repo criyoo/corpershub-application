@@ -127,12 +127,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "apps.accounts.authentication.CorpersJWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("apps.accounts.authentication.CorpersJWTAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 12,
@@ -171,13 +167,9 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", True)
-CORS_ALLOWED_ORIGINS = [
-    origin.strip() for origin in env("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()
-]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in env("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
 CORS_ALLOW_CREDENTIALS = env_bool("CORS_ALLOW_CREDENTIALS", True)
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip() for origin in env("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()
-]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in env("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
 
 AUTH_REFRESH_COOKIE_NAME = env("AUTH_REFRESH_COOKIE_NAME", "corpershub_refresh")
 AUTH_REFRESH_COOKIE_PATH = env("AUTH_REFRESH_COOKIE_PATH", "/")
@@ -213,8 +205,12 @@ OTP_MAX_ATTEMPTS = int(env("OTP_MAX_ATTEMPTS", "5") or "5")
 OTP_EMAIL_ASYNC = env_bool("OTP_EMAIL_ASYNC", True)
 SEED_DEFAULT_ACCOUNTS_ENABLED = env_bool("SEED_DEFAULT_ACCOUNTS_ENABLED", False)
 DIKRIPT_API_BASE_URL = env("DIKRIPT_API_BASE_URL", "https://api.dikript.com") or "https://api.dikript.com"
-DIKRIPT_NIN_API_URL = env("DIKRIPT_NIN_API_URL", "/dikript/verification/api/v1/getnin") or "/dikript/verification/api/v1/getnin"
-DIKRIPT_CAC_API_URL = env("DIKRIPT_CAC_API_URL", "/dikript/verification/api/v1/getcacbasic") or "/dikript/verification/api/v1/getcacbasic"
+DIKRIPT_NIN_API_URL = (
+    env("DIKRIPT_NIN_API_URL", "/dikript/verification/api/v1/getnin") or "/dikript/verification/api/v1/getnin"
+)
+DIKRIPT_CAC_API_URL = (
+    env("DIKRIPT_CAC_API_URL", "/dikript/verification/api/v1/getcacbasic") or "/dikript/verification/api/v1/getcacbasic"
+)
 DIKRIPT_PUBLIC_KEY = env("DIKRIPT_PUBLIC_KEY", "") or ""
 DIKRIPT_SECRET_KEY = env("DIKRIPT_SECRET_KEY", "") or ""
 DIKRIPT_TIMEOUT_SECONDS = float(env("DIKRIPT_TIMEOUT_SECONDS", "10") or "10")
@@ -233,9 +229,7 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", HOSTINGER_DEFAULT_FROM_EMAIL) or HOSTIN
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "") or ""
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
-default_email_port = (
-    HOSTINGER_SMTP_SSL_PORT if EMAIL_USE_SSL else HOSTINGER_SMTP_TLS_PORT
-)
+default_email_port = HOSTINGER_SMTP_SSL_PORT if EMAIL_USE_SSL else HOSTINGER_SMTP_TLS_PORT
 EMAIL_PORT = int(env("EMAIL_PORT", str(default_email_port)) or str(default_email_port))
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or HOSTINGER_DEFAULT_FROM_EMAIL)
 EMAIL_FROM_EMAIL = env("EMAIL_FROM_EMAIL", "") or EMAIL_HOST_USER or DEFAULT_FROM_EMAIL
@@ -270,6 +264,7 @@ AWS_S3_ADDRESSING_STYLE = env("AWS_S3_ADDRESSING_STYLE", "auto")
 AWS_S3_URL_PROTOCOL = env("AWS_S3_URL_PROTOCOL", "https:")
 AWS_QUERYSTRING_AUTH = False
 AWS_DEFAULT_ACL = None
+
 
 def build_storages(bucket_name: str) -> dict[str, dict[str, str]]:
     storages = {
@@ -306,13 +301,10 @@ FLUTTERWAVE_PUBLIC_KEY = env("FLUTTERWAVE_PUBLIC_KEY", "") or ""
 FLUTTERWAVE_SECRET_KEY = env("FLUTTERWAVE_SECRET_KEY", "") or ""
 FLUTTERWAVE_ENCRYPTION_KEY = env("FLUTTERWAVE_ENCRYPTION_KEY", "") or ""
 FLUTTERWAVE_WEBHOOK_SECRET_HASH = env("FLUTTERWAVE_WEBHOOK_SECRET_HASH", "") or ""
-FLUTTERWAVE_API_BASE_URL = (
-    env("FLUTTERWAVE_API_BASE_URL") or "https://f4bexperience.flutterwave.com"
-)
+FLUTTERWAVE_API_BASE_URL = env("FLUTTERWAVE_API_BASE_URL") or "https://f4bexperience.flutterwave.com"
 FLUTTERWAVE_V3_API_BASE_URL = env("FLUTTERWAVE_V3_API_BASE_URL", "https://api.flutterwave.com/v3") or ""
 FLUTTERWAVE_TOKEN_URL = (
-    env("FLUTTERWAVE_TOKEN_URL")
-    or "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
+    env("FLUTTERWAVE_TOKEN_URL") or "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
 )
 FLUTTERWAVE_SETTLEMENT_BANK_NAME = env("FLUTTERWAVE_SETTLEMENT_BANK_NAME", "ProvidusBank PLC") or ""
 FLUTTERWAVE_SETTLEMENT_ACCOUNT_NUMBER = env("FLUTTERWAVE_SETTLEMENT_ACCOUNT_NUMBER", "1309659188") or ""

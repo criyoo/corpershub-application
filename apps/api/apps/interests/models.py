@@ -10,9 +10,7 @@ class Interest(UUIDPrimaryKeyModel):
         CONTACTED = "contacted", "Contacted"
         ARCHIVED = "archived", "Archived"
 
-    corper = models.ForeignKey(
-        "corpers.CorperProfile", on_delete=models.CASCADE, related_name="interests"
-    )
+    corper = models.ForeignKey("corpers.CorperProfile", on_delete=models.CASCADE, related_name="interests")
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name="interested_corpers")
     message = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.EXPRESSED)
@@ -23,6 +21,4 @@ class Interest(UUIDPrimaryKeyModel):
 
     class Meta:
         ordering = ["-created_at"]
-        constraints = [
-            models.UniqueConstraint(fields=["corper", "company"], name="unique_interest_pair")
-        ]
+        constraints = [models.UniqueConstraint(fields=["corper", "company"], name="unique_interest_pair")]

@@ -18,9 +18,7 @@ LIST_SPLIT_RE = re.compile(r"[,;\n]+")
 AGE_RANGE_RE = re.compile(r"(?P<minimum>\d{2})\s*(?:-|to)\s*(?P<maximum>\d{2})")
 AGE_FLOOR_RE = re.compile(r"(?P<minimum>\d{2})\s*\+")
 AGE_CEILING_RE = re.compile(r"(?:under|below)\s*(?P<maximum>\d{2})")
-YEAR_RANGE_RE = re.compile(
-    r"(?P<minimum>(?:19|20)\d{2})\s*(?:-|to)\s*(?P<maximum>(?:19|20)\d{2})"
-)
+YEAR_RANGE_RE = re.compile(r"(?P<minimum>(?:19|20)\d{2})\s*(?:-|to)\s*(?P<maximum>(?:19|20)\d{2})")
 YEAR_FLOOR_RE = re.compile(r"(?P<minimum>(?:19|20)\d{2})\s*\+")
 YEAR_CEILING_RE = re.compile(r"(?:under|below|before)\s*(?P<maximum>(?:19|20)\d{2})")
 STOP_WORDS = {
@@ -109,19 +107,12 @@ class ScoreComponent:
 
 
 def viewer_can_see_corper_recommendations(viewer: User | None) -> bool:
-    return bool(
-        viewer
-        and viewer.is_authenticated
-        and viewer.role == User.Role.COMPANY
-    )
+    return bool(viewer and viewer.is_authenticated and viewer.role == User.Role.COMPANY)
 
 
 def viewer_can_see_company_recommendations(viewer: User | None) -> bool:
     return bool(
-        viewer
-        and viewer.is_authenticated
-        and viewer.role == User.Role.CORPER
-        and corper_has_paid_access(user=viewer)
+        viewer and viewer.is_authenticated and viewer.role == User.Role.CORPER and corper_has_paid_access(user=viewer)
     )
 
 
@@ -238,10 +229,7 @@ def _attach_recommendation(
     item.match_score = rounded_score
     item.match_reasons = reasons[:4]
     item.match_signal_count = signal_count
-    item.recommended = (
-        rounded_score >= RECOMMENDATION_THRESHOLD
-        and signal_count >= RECOMMENDATION_SIGNAL_THRESHOLD
-    )
+    item.recommended = rounded_score >= RECOMMENDATION_THRESHOLD and signal_count >= RECOMMENDATION_SIGNAL_THRESHOLD
 
 
 def _score_corper_for_company(*, corper: Any, company: Any) -> tuple[float, list[str], int]:
@@ -481,10 +469,7 @@ def _location_component(
 
     company_states = [
         normalized_state
-        for normalized_state in (
-            _normalized(state)
-            for state in LIST_SPLIT_RE.split(company_state or "")
-        )
+        for normalized_state in (_normalized(state) for state in LIST_SPLIT_RE.split(company_state or ""))
         if normalized_state
     ]
     if normalized_corper_state in company_states:
@@ -688,9 +673,7 @@ def _phrase_coverage(desired_value: str | None, evidence_texts: list[str | None]
 
     coverage_ratio = sum(score for _, score in scored_phrases) / len(scored_phrases)
     matched_phrases = [
-        phrase
-        for phrase, score in sorted(scored_phrases, key=lambda item: item[1], reverse=True)
-        if score >= 0.35
+        phrase for phrase, score in sorted(scored_phrases, key=lambda item: item[1], reverse=True) if score >= 0.35
     ]
     return min(coverage_ratio, 1.0), matched_phrases[:3]
 
@@ -702,7 +685,11 @@ def _best_phrase_similarity(left_value: str | None, right_value: str | None) -> 
         return _phrase_similarity(left_value, right_value)
 
     return max(
-        (_phrase_similarity(left_phrase, right_phrase) for left_phrase in left_phrases for right_phrase in right_phrases),
+        (
+            _phrase_similarity(left_phrase, right_phrase)
+            for left_phrase in left_phrases
+            for right_phrase in right_phrases
+        ),
         default=0.0,
     )
 
@@ -753,11 +740,7 @@ def _extract_qualifications(value: str | None) -> set[str]:
         return set()
 
     padded = f" {normalized} "
-    qualifications = {
-        token
-        for token in _tokenize(normalized)
-        if token in {"hnd", "ond", "msc", "phd"}
-    }
+    qualifications = {token for token in _tokenize(normalized) if token in {"hnd", "ond", "msc", "phd"}}
     for pattern, canonical in QUALIFICATION_PATTERNS:
         if f" {pattern} " in padded:
             qualifications.add(canonical)
@@ -984,7 +967,7 @@ def _extract_bounds(
             continue
 
         bounds = parser(match.group(0))
-        remaining = _normalized(f"{value[:match.start()]} {value[match.end():]}")
+        remaining = _normalized(f"{value[: match.start()]} {value[match.end() :]}")
         return bounds, remaining
 
     return None, value

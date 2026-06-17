@@ -156,7 +156,9 @@ class ChatFlowTests(APITestCase):
         self.assertEqual(detail_response.data["participant_names"]["corper"], "Ada Corpers")
         self.assertEqual(detail_response.data["participant_names"]["company"], "Bright Future Logistics")
         self.assertEqual(detail_response.data["participant_images"]["corper"], "/media/corpers/profile-photos/ada.jpg")
-        self.assertEqual(detail_response.data["participant_images"]["company"], "/media/companies/profile-images/bright-future.jpg")
+        self.assertEqual(
+            detail_response.data["participant_images"]["company"], "/media/companies/profile-images/bright-future.jpg"
+        )
 
     def test_corper_conversation_list_includes_company_image(self):
         self.activate_paid_corper_plan()
@@ -177,7 +179,9 @@ class ChatFlowTests(APITestCase):
         response = self.client.get("/api/chat/conversations/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["results"][0]["counterpart"]["image"], "/media/companies/profile-images/bright-future.jpg")
+        self.assertEqual(
+            response.data["results"][0]["counterpart"]["image"], "/media/companies/profile-images/bright-future.jpg"
+        )
 
     def test_free_trial_corper_cannot_open_chat_list(self):
         interest = Interest.objects.create(

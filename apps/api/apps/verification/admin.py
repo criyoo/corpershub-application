@@ -147,9 +147,7 @@ class CorperVerificationAdmin(admin.ModelAdmin):
         return self._review_biodata_value(obj, "university_matriculation_number")
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("user").prefetch_related(
-            "verification_attempts"
-        )
+        return super().get_queryset(request).select_related("user").prefetch_related("verification_attempts")
 
     def has_add_permission(self, request):
         return False

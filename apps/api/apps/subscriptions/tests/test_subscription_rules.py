@@ -15,6 +15,7 @@ from apps.subscriptions.constants import SUBSCRIPTION_PLAN_PRICES as billing_pla
 
 free, three, six, twelve = billing_plans.keys()
 
+
 class SubscriptionRulesTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

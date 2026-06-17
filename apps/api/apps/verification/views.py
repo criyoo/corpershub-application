@@ -185,9 +185,7 @@ def _build_biodata_metadata(serializer) -> dict:
         "mobile_number": serializer.validated_data.get("mobile_number", ""),
         "state_of_origin": serializer.validated_data.get("state_of_origin", ""),
         "country_of_birth": serializer.validated_data.get("country_of_birth", ""),
-        "university_matriculation_number": serializer.validated_data.get(
-            "university_matriculation_number", ""
-        ),
+        "university_matriculation_number": serializer.validated_data.get("university_matriculation_number", ""),
     }
 
 
@@ -223,9 +221,7 @@ def _persist_biodata_snapshot(*, corper: CorperProfile, metadata: dict):
 
 def _get_latest_biodata_attempt(corper: CorperProfile):
     return (
-        corper.verification_attempts.filter(
-            verification_type=VerificationAttempt.VerificationType.BIODATA
-        )
+        corper.verification_attempts.filter(verification_type=VerificationAttempt.VerificationType.BIODATA)
         .exclude(status=VerificationAttempt.Status.FAILED)
         .order_by("-created_at")
         .first()
@@ -291,9 +287,7 @@ def _validate_corper_nin_payload(
     submitted_nin: str,
 ) -> list[str]:
     mismatches: list[str] = []
-    returned_nin = _normalize_nin_value(
-        data.get("nin") or data.get("vNin") or data.get("VNin") or data.get("NIN")
-    )
+    returned_nin = _normalize_nin_value(data.get("nin") or data.get("vNin") or data.get("VNin") or data.get("NIN"))
 
     if normalize_person_name(corper.first_name) != normalize_person_name(data.get("firstName")):
         mismatches.append("First name does not match the NIN record.")
@@ -362,17 +356,9 @@ class VerificationAttemptListCreateAPIView(generics.ListCreateAPIView):
         verification_type = serializer.validated_data["verification_type"]
         submitted_value = serializer.validated_data.get("submitted_value", "")
         full_name = serializer.validated_data.get("full_name", "")
-        first_name = serializer.validated_data.get("first_name", "")
-        middle_name = serializer.validated_data.get("middle_name", "")
-        surname = serializer.validated_data.get("surname", "")
         date_of_birth = serializer.validated_data.get("date_of_birth")
-        gender = serializer.validated_data.get("gender", "")
         mobile_number = serializer.validated_data.get("mobile_number", "")
-        state_of_origin = serializer.validated_data.get("state_of_origin", "")
-        country_of_birth = serializer.validated_data.get("country_of_birth", "")
-        university_matriculation_number = serializer.validated_data.get(
-            "university_matriculation_number", ""
-        )
+        university_matriculation_number = serializer.validated_data.get("university_matriculation_number", "")
         document = serializer.validated_data.get("document")
 
         if (
@@ -420,12 +406,9 @@ class VerificationAttemptListCreateAPIView(generics.ListCreateAPIView):
                 error_message=error_message,
             )
             return Response({"detail": error_message}, status=status.HTTP_400_BAD_REQUEST)
-        if (
-            verification_type == VerificationAttempt.VerificationType.BIODATA
-            and CorperProfile.has_mobile_number(
-                mobile_number,
-                exclude_pk=corper.pk,
-            )
+        if verification_type == VerificationAttempt.VerificationType.BIODATA and CorperProfile.has_mobile_number(
+            mobile_number,
+            exclude_pk=corper.pk,
         ):
             error_message = "This mobile number has already been submitted."
             _record_failed_attempt(
@@ -704,9 +687,7 @@ class VerificationAttemptListCreateAPIView(generics.ListCreateAPIView):
                             elif latest_biodata_attempt.status != VerificationAttempt.Status.APPROVED:
                                 latest_biodata_attempt.status = VerificationAttempt.Status.APPROVED
                                 latest_biodata_attempt.review_note = ""
-                                latest_biodata_attempt.save(
-                                    update_fields=["status", "review_note", "updated_at"]
-                                )
+                                latest_biodata_attempt.save(update_fields=["status", "review_note", "updated_at"])
                 elif verification_type == VerificationAttempt.VerificationType.CALLUP:
                     attempt = VerificationAttempt.objects.create(
                         corper=corper,

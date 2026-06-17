@@ -85,13 +85,11 @@ class CompanySearchAPIView(generics.ListAPIView):
             enforce_browse_access(user=self.request.user)
         queryset = queryset.filter(CompanyProfile.directory_visibility_q())
         if self.request.user.is_authenticated and self.request.user.role == "corper":
-            queryset = queryset.filter(
-                verification_status=CompanyProfile.VerificationStatus.VERIFIED
-            )
+            queryset = queryset.filter(verification_status=CompanyProfile.VerificationStatus.VERIFIED)
         else:
-            queryset = queryset.filter(
-                verification_status=CompanyProfile.VerificationStatus.VERIFIED
-            ).exclude(company_name="")
+            queryset = queryset.filter(verification_status=CompanyProfile.VerificationStatus.VERIFIED).exclude(
+                company_name=""
+            )
         return filter_companies_for_directory(
             queryset=queryset,
             params=self.request.query_params,

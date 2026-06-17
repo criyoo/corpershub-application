@@ -65,7 +65,7 @@ class DikriptLookupTests(TestCase):
                 path="/dikript/verification/api/v1/getnin",
                 lookup_value=self.lookup_value,
                 query={"nin": self.lookup_value},
-        )
+            )
 
         self.assertEqual(payload["data"]["nin"], "91231161558")
         self.assertEqual(urlopen_mock.call_count, 1)

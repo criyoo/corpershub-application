@@ -11,7 +11,6 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.common.legal import CORPER_LEGAL_DOCUMENT_SLUGS
 from apps.corpers.models import CorperProfile
 from apps.corpers.services import ensure_corper_profile
 from apps.verification.models import VerificationAttempt
@@ -515,9 +514,7 @@ class CorperProfileAPITests(APITestCase):
 
         with patch(
             "apps.verification.views.CorperProfile.save",
-            side_effect=RuntimeError(
-                'DETAIL: Key (mobile_number)=(+2348099446062) already exists.'
-            ),
+            side_effect=RuntimeError("DETAIL: Key (mobile_number)=(+2348099446062) already exists."),
         ):
             response = self.client.post(
                 "/api/verification/attempts/",

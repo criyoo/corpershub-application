@@ -33,9 +33,7 @@ OPEN_PAYMENT_ATTEMPT_STATUSES = (
     PaymentTransaction.Status.PENDING,
     PaymentTransaction.Status.PROCESSING,
 )
-EXPIRABLE_PAYMENT_ATTEMPT_STATUSES = (
-    PaymentTransaction.Status.PENDING,
-)
+EXPIRABLE_PAYMENT_ATTEMPT_STATUSES = (PaymentTransaction.Status.PENDING,)
 TERMINAL_PAYMENT_STATUSES = (
     PaymentTransaction.Status.SUCCESSFUL,
     PaymentTransaction.Status.FAILED,
@@ -226,7 +224,9 @@ class FlutterwaveGateway(PaymentGateway):
         metadata: dict,
     ):
         self._validate_checkout_settings()
-        customer_name = str(metadata.get("customer_name") or metadata.get("user_name") or email.split("@", 1)[0]).strip()
+        customer_name = str(
+            metadata.get("customer_name") or metadata.get("user_name") or email.split("@", 1)[0]
+        ).strip()
         customer_phone = self._format_customer_phone_number(str(metadata.get("customer_phone") or ""))
         redirect_url = str(metadata.get("provider_redirect_url") or "").strip()
         if not redirect_url:
@@ -355,9 +355,9 @@ class FlutterwaveGateway(PaymentGateway):
         if not secret_key:
             return None
 
-        v3_base_url = str(getattr(settings, "FLUTTERWAVE_V3_API_BASE_URL", "") or "https://api.flutterwave.com/v3").rstrip(
-            "/"
-        )
+        v3_base_url = str(
+            getattr(settings, "FLUTTERWAVE_V3_API_BASE_URL", "") or "https://api.flutterwave.com/v3"
+        ).rstrip("/")
         normalized_transaction_id = normalize_provider_transaction_id(transaction_id)
         if normalized_transaction_id:
             verify_url = f"{v3_base_url}/transactions/{normalized_transaction_id}/verify"
@@ -535,7 +535,9 @@ class FlutterwaveGateway(PaymentGateway):
         return self._access_token
 
     def _build_customer_payload(self, *, email: str, metadata: dict) -> dict:
-        customer_name = str(metadata.get("customer_name") or metadata.get("user_name") or email.split("@", 1)[0]).strip()
+        customer_name = str(
+            metadata.get("customer_name") or metadata.get("user_name") or email.split("@", 1)[0]
+        ).strip()
         first_name, middle_name, last_name = self._split_name(customer_name)
         country_code, phone_number = self._split_phone_number(str(metadata.get("customer_phone") or ""))
         if not phone_number:
@@ -958,15 +960,12 @@ def _sync_flutterwave_record(
     data = _extract_provider_data(payload)
     customer = data.get("customer") or {}
     billing_details = data.get("billing_details") or {}
-    customer_email = (
-        str(billing_details.get("email") or customer.get("email") or record.customer_email or transaction.user.email)
-        .strip()
-    )
+    customer_email = str(
+        billing_details.get("email") or customer.get("email") or record.customer_email or transaction.user.email
+    ).strip()
 
     record.tx_ref = transaction.reference
-    record.flutterwave_transaction_id = str(
-        data.get("id") or record.flutterwave_transaction_id or ""
-    ).strip()
+    record.flutterwave_transaction_id = str(data.get("id") or record.flutterwave_transaction_id or "").strip()
     if payload and data.get("amount") is not None:
         record.amount = _normalize_decimal_amount(data.get("amount"))
     if payload and data.get("currency"):
@@ -1127,15 +1126,12 @@ def _verify_flutterwave_transaction(
         _sync_flutterwave_record(transaction=transaction, status=transaction.status)
         return transaction
 
-    if (
-        preferred_transaction_id is None
-        and redirect_status in {
-            PaymentTransaction.Status.CANCELLED,
-            PaymentTransaction.Status.EXPIRED,
-            PaymentTransaction.Status.ABANDONED,
-            PaymentTransaction.Status.FAILED,
-        }
-    ):
+    if preferred_transaction_id is None and redirect_status in {
+        PaymentTransaction.Status.CANCELLED,
+        PaymentTransaction.Status.EXPIRED,
+        PaymentTransaction.Status.ABANDONED,
+        PaymentTransaction.Status.FAILED,
+    }:
         return _set_terminal_payment_status(
             transaction=transaction,
             status=redirect_status,
@@ -1271,7 +1267,8 @@ def build_flutterwave_return_url(
         gateway=transaction.gateway,
         reference=transaction.reference,
         tx_ref=transaction.reference,
-        transaction_id=transaction_id or getattr(getattr(transaction, "flutterwave_record", None), "flutterwave_transaction_id", ""),
+        transaction_id=transaction_id
+        or getattr(getattr(transaction, "flutterwave_record", None), "flutterwave_transaction_id", ""),
         status=transaction.status,
     )
 
@@ -1292,12 +1289,16 @@ def apply_payment_outcome(*, transaction: PaymentTransaction, payload: dict, out
     if transaction.status == PaymentTransaction.Status.SUCCESSFUL:
         _sync_flutterwave_record(transaction=transaction, payload=payload, status=transaction.status)
         return transaction
-    if transaction.status in {
-        PaymentTransaction.Status.FAILED,
-        PaymentTransaction.Status.CANCELLED,
-        PaymentTransaction.Status.EXPIRED,
-        PaymentTransaction.Status.ABANDONED,
-    } and outcome == "failed":
+    if (
+        transaction.status
+        in {
+            PaymentTransaction.Status.FAILED,
+            PaymentTransaction.Status.CANCELLED,
+            PaymentTransaction.Status.EXPIRED,
+            PaymentTransaction.Status.ABANDONED,
+        }
+        and outcome == "failed"
+    ):
         _sync_flutterwave_record(transaction=transaction, payload=payload, status=transaction.status)
         return transaction
 

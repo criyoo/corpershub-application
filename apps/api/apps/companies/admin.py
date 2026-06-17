@@ -112,27 +112,23 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["desired_corper_description"].label = "Company summary"
         form.base_fields["approval_status"].required = False
-        form.base_fields["company_registration_number"].help_text = (
-            "Review this registration number manually before marking the company as verified."
-        )
-        form.base_fields["tax_identification_number"].help_text = (
-            "Review this tax identification number manually before marking the company as verified."
-        )
-        form.base_fields["verification_status"].help_text = (
-            "This reflects the automatic CAC verification result for the company verification details."
-        )
-        form.base_fields["approval_status"].help_text = (
-            "Use this dropdown to approve or reject the completed company profile after review."
-        )
+        form.base_fields[
+            "company_registration_number"
+        ].help_text = "Review this registration number manually before marking the company as verified."
+        form.base_fields[
+            "tax_identification_number"
+        ].help_text = "Review this tax identification number manually before marking the company as verified."
+        form.base_fields[
+            "verification_status"
+        ].help_text = "This reflects the automatic CAC verification result for the company verification details."
+        form.base_fields[
+            "approval_status"
+        ].help_text = "Use this dropdown to approve or reject the completed company profile after review."
         return form
 
     def save_model(self, request, obj, form, change):
         previous_status = None
         if change and obj.pk:
-            previous_status = (
-                CompanyProfile.objects.filter(pk=obj.pk)
-                .values_list("approval_status", flat=True)
-                .first()
-            )
+            previous_status = CompanyProfile.objects.filter(pk=obj.pk).values_list("approval_status", flat=True).first()
         super().save_model(request, obj, form, change)
         maybe_send_company_approval_welcome_email(obj, previous_status=previous_status)

@@ -44,10 +44,14 @@ class DashboardOverviewAPIView(APIView):
         user = request.user
         conversations = get_user_conversations(user)
         conversation_ids = conversations.values_list("id", flat=True)
-        unread_message_count = Message.objects.filter(
-            conversation_id__in=conversation_ids,
-            read_at__isnull=True,
-        ).exclude(sender=user).count()
+        unread_message_count = (
+            Message.objects.filter(
+                conversation_id__in=conversation_ids,
+                read_at__isnull=True,
+            )
+            .exclude(sender=user)
+            .count()
+        )
         subscription = get_latest_subscription(user=user, autocreate=False)
 
         if user.role == User.Role.COMPANY:
@@ -79,10 +83,12 @@ class DashboardOverviewAPIView(APIView):
         if company and company.approval_status != CompanyProfile.ApprovalStatus.APPROVED:
             outstanding_credentials = 1
 
-        corpers = CorperProfile.objects.select_related("user").filter(
-            user__is_active=True,
-        ).filter(
-            CorperProfile.directory_visibility_q()
+        corpers = (
+            CorperProfile.objects.select_related("user")
+            .filter(
+                user__is_active=True,
+            )
+            .filter(CorperProfile.directory_visibility_q())
         )
         scored_corpers = apply_corper_recommendations(viewer=user, corpers=corpers)
 
@@ -97,9 +103,7 @@ class DashboardOverviewAPIView(APIView):
                 company_expressed_at__isnull=False,
             ).count(),
             "online_count": build_directory_stats(role=User.Role.CORPER)["online_count"],
-            "strong_match_count": sum(
-                1 for corper in scored_corpers if getattr(corper, "match_score", 0) > 50
-            ),
+            "strong_match_count": sum(1 for corper in scored_corpers if getattr(corper, "match_score", 0) > 50),
         }
 
     def _corper_overview(self, *, user):
@@ -133,9 +137,7 @@ class DashboardOverviewAPIView(APIView):
                 corper_expressed_at__isnull=False,
             ).count(),
             "online_count": build_directory_stats(role=User.Role.COMPANY)["online_count"],
-            "strong_match_count": sum(
-                1 for company in scored_companies if getattr(company, "match_score", 0) > 50
-            ),
+            "strong_match_count": sum(1 for company in scored_companies if getattr(company, "match_score", 0) > 50),
         }
 
 

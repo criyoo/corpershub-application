@@ -30,7 +30,8 @@ def resolve_corper_approval_status(profile: CorperProfile) -> str:
     if profile.is_complete and profile.documents_verified:
         return CorperProfile.ApprovalStatus.APPROVED
     if profile.terms_accepted and (
-        profile.verification_status in {
+        profile.verification_status
+        in {
             CorperProfile.VerificationStatus.PENDING,
             CorperProfile.VerificationStatus.UNDER_REVIEW,
         }
@@ -334,13 +335,9 @@ class CorperProfileSubmissionSerializer(serializers.Serializer):
                 {"accepted_terms_of_agreement": ["Accept the Terms of Agreement to continue."]}
             )
         if not attrs["accepted_terms_of_use"]:
-            raise serializers.ValidationError(
-                {"accepted_terms_of_use": ["Accept the Terms of Use to continue."]}
-            )
+            raise serializers.ValidationError({"accepted_terms_of_use": ["Accept the Terms of Use to continue."]})
         missing_documents = [
-            slug
-            for slug in CORPER_LEGAL_DOCUMENT_SLUGS
-            if slug not in set(attrs.get("accepted_documents", []))
+            slug for slug in CORPER_LEGAL_DOCUMENT_SLUGS if slug not in set(attrs.get("accepted_documents", []))
         ]
         if missing_documents:
             raise serializers.ValidationError(
@@ -458,9 +455,7 @@ class CorperAdminSerializer(CorperProfileValidationMixin, serializers.ModelSeria
     nysc_callup_document = serializers.SerializerMethodField()
     nysc_state_code_document = serializers.SerializerMethodField()
     is_complete = serializers.BooleanField(read_only=True)
-    approval_status = serializers.ChoiceField(
-        choices=CorperProfile.ApprovalStatus.choices, required=False
-    )
+    approval_status = serializers.ChoiceField(choices=CorperProfile.ApprovalStatus.choices, required=False)
 
     class Meta:
         model = CorperProfile
@@ -538,15 +533,9 @@ class CorperAdminVerificationSerializer(serializers.ModelSerializer):
     masked_state_code = serializers.SerializerMethodField()
     nysc_callup_document = serializers.SerializerMethodField()
     nysc_state_code_document = serializers.SerializerMethodField()
-    biodata_verification_status = serializers.ChoiceField(
-        choices=CorperProfile.SensitiveStatus.choices, read_only=True
-    )
-    verification_status = serializers.ChoiceField(
-        choices=CorperProfile.VerificationStatus.choices, read_only=True
-    )
-    nin_verification_status = serializers.ChoiceField(
-        choices=CorperProfile.SensitiveStatus.choices, required=False
-    )
+    biodata_verification_status = serializers.ChoiceField(choices=CorperProfile.SensitiveStatus.choices, read_only=True)
+    verification_status = serializers.ChoiceField(choices=CorperProfile.VerificationStatus.choices, read_only=True)
+    nin_verification_status = serializers.ChoiceField(choices=CorperProfile.SensitiveStatus.choices, required=False)
     nysc_callup_verification_status = serializers.ChoiceField(
         choices=CorperProfile.SensitiveStatus.choices, required=False
     )
@@ -625,29 +614,19 @@ class CorperAdminVerificationSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         profile = self._get_corper_profile(instance)
         representation["verification_status"] = (
-            profile.verification_status
-            if profile
-            else CorperProfile.VerificationStatus.PENDING
+            profile.verification_status if profile else CorperProfile.VerificationStatus.PENDING
         )
         representation["biodata_verification_status"] = (
-            profile.biodata_verification_status
-            if profile
-            else CorperProfile.SensitiveStatus.UNSUBMITTED
+            profile.biodata_verification_status if profile else CorperProfile.SensitiveStatus.UNSUBMITTED
         )
         representation["nin_verification_status"] = (
-            profile.nin_verification_status
-            if profile
-            else CorperProfile.SensitiveStatus.UNSUBMITTED
+            profile.nin_verification_status if profile else CorperProfile.SensitiveStatus.UNSUBMITTED
         )
         representation["nysc_callup_verification_status"] = (
-            profile.nysc_callup_verification_status
-            if profile
-            else CorperProfile.SensitiveStatus.UNSUBMITTED
+            profile.nysc_callup_verification_status if profile else CorperProfile.SensitiveStatus.UNSUBMITTED
         )
         representation["nysc_state_code_verification_status"] = (
-            profile.nysc_state_code_verification_status
-            if profile
-            else CorperProfile.SensitiveStatus.UNSUBMITTED
+            profile.nysc_state_code_verification_status if profile else CorperProfile.SensitiveStatus.UNSUBMITTED
         )
         return representation
 

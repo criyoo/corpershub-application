@@ -1,4 +1,3 @@
-from django.db.models import Count
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -40,16 +39,10 @@ class OverviewAPIView(APIView):
             "total_pending_companies": CompanyProfile.objects.filter(
                 approval_status=CompanyProfile.ApprovalStatus.PENDING
             ).count(),
-            "total_interests_by_companies": Interest.objects.filter(
-                company_expressed_at__isnull=False
-            ).count(),
-            "total_interests_by_corpers": Interest.objects.filter(
-                corper_expressed_at__isnull=False
-            ).count(),
+            "total_interests_by_companies": Interest.objects.filter(company_expressed_at__isnull=False).count(),
+            "total_interests_by_corpers": Interest.objects.filter(corper_expressed_at__isnull=False).count(),
             "total_conversations": Conversation.objects.count(),
-            "pending_payments": PaymentTransaction.objects.filter(
-                status__in=["pending", "processing"]
-            ).count(),
+            "pending_payments": PaymentTransaction.objects.filter(status__in=["pending", "processing"]).count(),
         }
         return Response(OverviewSerializer(payload).data)
 

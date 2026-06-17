@@ -15,9 +15,7 @@ class Notification(UUIDPrimaryKeyModel):
         PAYMENT_FAILURE = "payment_failure", "Payment Failure"
         SUBSCRIPTION_EXPIRING = "subscription_expiring", "Subscription Expiring"
 
-    recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
-    )
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     notification_type = models.CharField(max_length=64, choices=Type.choices)
     title = models.CharField(max_length=255)
     body = models.TextField()

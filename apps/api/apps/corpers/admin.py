@@ -178,19 +178,15 @@ class CorperProfileAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["posting_location_state"].label = "Posting state"
         form.base_fields["skill"].label = "Primary skill"
-        form.base_fields["approval_status"].help_text = (
-            "Use this dropdown to approve or reject the completed corper profile after review."
-        )
+        form.base_fields[
+            "approval_status"
+        ].help_text = "Use this dropdown to approve or reject the completed corper profile after review."
         return form
 
     def save_model(self, request, obj, form, change):
         previous_status = None
         if change and obj.pk:
-            previous_status = (
-                CorperProfile.objects.filter(pk=obj.pk)
-                .values_list("approval_status", flat=True)
-                .first()
-            )
+            previous_status = CorperProfile.objects.filter(pk=obj.pk).values_list("approval_status", flat=True).first()
         super().save_model(request, obj, form, change)
         maybe_send_corper_approval_welcome_email(obj, previous_status=previous_status)
 

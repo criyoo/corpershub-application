@@ -26,9 +26,7 @@ def _registration_dates_match_with_tolerance(*, expected_value, returned_value, 
 
 
 def verify_company_profile_or_raise(company: CompanyProfile) -> dict:
-    normalized_registration_number = normalize_company_registration_number(
-        company.company_registration_number
-    )
+    normalized_registration_number = normalize_company_registration_number(company.company_registration_number)
     normalized_lookup_value = normalize_registration_lookup_value(normalized_registration_number)
     payload = dikript_lookup(
         verification_type=DikriptVerificationCache.VerificationType.CAC,
@@ -47,9 +45,7 @@ def verify_company_profile_or_raise(company: CompanyProfile) -> dict:
         )
 
     if not is_truthy(data.get("registrationApproved")):
-        raise ValidationError(
-            {"company_registration_number": "CAC has not approved this registration record."}
-        )
+        raise ValidationError({"company_registration_number": "CAC has not approved this registration record."})
 
     expected_digits = normalize_registration_digits(normalized_registration_number)
     returned_digits = normalize_registration_digits(data.get("rcNumber"))

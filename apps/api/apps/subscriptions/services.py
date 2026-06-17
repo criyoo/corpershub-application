@@ -22,9 +22,7 @@ CORPER_SEMIANNUAL_PLAN_CODE = six
 CORPER_YEARLY_PLAN_CODE = twelve
 TRIAL_DURATION_DAYS = 7
 PAID_DURATION_MONTHS = 6
-CORPER_PAID_ACCESS_REQUIRED_MESSAGE = (
-    "This feature is available on paid plans only. Subscribe to continue."
-)
+CORPER_PAID_ACCESS_REQUIRED_MESSAGE = "This feature is available on paid plans only. Subscribe to continue."
 CORPER_PLAN_RANKS = {
     FREE_PLAN_CODE: 0,
     CORPER_QUARTERLY_PLAN_CODE: 1,
@@ -42,11 +40,7 @@ class SubscriptionTransition:
 
 
 def user_supports_subscriptions(user) -> bool:
-    return bool(
-        user
-        and getattr(user, "is_authenticated", False)
-        and getattr(user, "role", "") == User.Role.CORPER
-    )
+    return bool(user and getattr(user, "is_authenticated", False) and getattr(user, "role", "") == User.Role.CORPER)
 
 
 def add_months(value, months: int):
@@ -144,9 +138,7 @@ def get_paid_plan_code_for_role(role: str) -> str:
 def get_corper_signup_plan(plan_code: str) -> SubscriptionPlan:
     plan = (
         SubscriptionPlan.objects.filter(code=plan_code, is_active=True)
-        .filter(
-            applies_to=SubscriptionPlan.AppliesTo.CORPER
-        )
+        .filter(applies_to=SubscriptionPlan.AppliesTo.CORPER)
         .first()
     )
     if plan is None:
@@ -174,7 +166,9 @@ def refresh_user_subscriptions(*, user, now=None) -> None:
     )
 
 
-def ensure_trial_subscription(*, user, now=None, plan: SubscriptionPlan | None = None, metadata_source="default-trial") -> UserSubscription | None:
+def ensure_trial_subscription(
+    *, user, now=None, plan: SubscriptionPlan | None = None, metadata_source="default-trial"
+) -> UserSubscription | None:
     if not user_supports_subscriptions(user):
         return None
 
@@ -309,6 +303,4 @@ def enforce_browse_access(*, user) -> UserSubscription | None:
             raise PermissionDenied("Choose a subscription plan on your billing page to start browsing.")
         if latest_subscription.status == UserSubscription.Status.PENDING:
             raise PermissionDenied("Your payment is pending. Browsing unlocks after it is confirmed.")
-    raise PermissionDenied(
-        "Your 7-day free trial has expired. Upgrade to the Paid plan to continue browsing."
-    )
+    raise PermissionDenied("Your 7-day free trial has expired. Upgrade to the Paid plan to continue browsing.")

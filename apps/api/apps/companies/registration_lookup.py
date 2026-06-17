@@ -25,9 +25,7 @@ COMPANY_REGISTRATION_NUMBER_VALIDATION_MESSAGE = (
     "Enter a valid company registration number in the format RC12345, BN12345, "
     "IT12345, LP12345, or LLP12345 without any spaces."
 )
-COMPANY_REGISTRATION_NUMBER_PATTERN = re.compile(
-    rf"^(?:{'|'.join(ALLOWED_COMPANY_REGISTRATION_PREFIXES)})\d{{5,10}}$"
-)
+COMPANY_REGISTRATION_NUMBER_PATTERN = re.compile(rf"^(?:{'|'.join(ALLOWED_COMPANY_REGISTRATION_PREFIXES)})\d{{5,10}}$")
 COMPANY_REGISTRATION_NUMBER_COERCION_PATTERN = re.compile(
     rf"^({'|'.join(ALLOWED_COMPANY_REGISTRATION_PREFIXES)})\s*(?:-\s*|\s+)?(\d{{5,10}})$"
 )
@@ -91,13 +89,9 @@ def lookup_company_registration_number(
 ) -> CompanyRegistrationLookupResult:
     normalized_registration_number = normalize_company_registration_number(company_registration_number)
     if not normalized_registration_number:
-        raise ValidationError(
-            {"company_registration_number": "Company registration number is required."}
-        )
+        raise ValidationError({"company_registration_number": "Company registration number is required."})
     if not is_valid_company_registration_number(normalized_registration_number):
-        raise ValidationError(
-            {"company_registration_number": COMPANY_REGISTRATION_NUMBER_VALIDATION_MESSAGE}
-        )
+        raise ValidationError({"company_registration_number": COMPANY_REGISTRATION_NUMBER_VALIDATION_MESSAGE})
 
     try:
         normalized_lookup_value = normalize_registration_lookup_value(normalized_registration_number)
@@ -114,9 +108,7 @@ def lookup_company_registration_number(
 
     data = payload.get("data") or {}
     if not payload.get("status") or not isinstance(data, dict) or not data:
-        raise ValidationError(
-            {"company_registration_number": _build_lookup_failure_message(payload)}
-        )
+        raise ValidationError({"company_registration_number": _build_lookup_failure_message(payload)})
 
     company_name = str(data.get("companyName") or "").strip()
     company_status = "APPROVED" if is_truthy(data.get("registrationApproved")) else "PENDING"
@@ -142,11 +134,7 @@ def lookup_company_registration_number(
     is_active = resolve_company_registration_active_status(data.get("registrationApproved"), company_status)
     if not is_active:
         raise ValidationError(
-            {
-                "company_registration_number": (
-                    "This company registration is not approved by CAC yet."
-                )
-            }
+            {"company_registration_number": ("This company registration is not approved by CAC yet.")}
         )
 
     return CompanyRegistrationLookupResult(

@@ -35,11 +35,7 @@ def _iter_home_background_paths() -> list[Path]:
         return []
 
     return sorted(
-        (
-            path
-            for path in image_directory.iterdir()
-            if path.is_file() and IMAGE_FILE_PATTERN.fullmatch(path.name)
-        ),
+        (path for path in image_directory.iterdir() if path.is_file() and IMAGE_FILE_PATTERN.fullmatch(path.name)),
         key=lambda path: (
             IMAGE_NAME_ORDER.get(path.stem.lower(), float("inf")),
             path.name.lower(),
@@ -65,9 +61,7 @@ def home_background_manifest(request):
             "images": [
                 {
                     "name": image_path.name,
-                    "url": request.build_absolute_uri(
-                        f"/api/home-backgrounds/{quote(image_path.name)}"
-                    ),
+                    "url": request.build_absolute_uri(f"/api/home-backgrounds/{quote(image_path.name)}"),
                 }
                 for image_path in _iter_home_background_paths()
             ]

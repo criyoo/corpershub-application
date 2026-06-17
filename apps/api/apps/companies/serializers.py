@@ -200,9 +200,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(COMPANY_REGISTRATION_NUMBER_VALIDATION_MESSAGE)
         exclude_pk = self.instance.pk if self.instance is not None else None
         if CompanyProfile.has_company_registration_number(normalized, exclude_pk=exclude_pk):
-            raise serializers.ValidationError(
-                "A company with this registration number already exists."
-            )
+            raise serializers.ValidationError("A company with this registration number already exists.")
         return normalized
 
     def validate_tax_identification_number(self, value):
@@ -213,9 +211,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(TAX_IDENTIFICATION_NUMBER_VALIDATION_MESSAGE)
         exclude_pk = self.instance.pk if self.instance is not None else None
         if CompanyProfile.has_tax_identification_number(normalized, exclude_pk=exclude_pk):
-            raise serializers.ValidationError(
-                "A company with this tax identification number already exists."
-            )
+            raise serializers.ValidationError("A company with this tax identification number already exists.")
         return normalized
 
     def validate(self, attrs):
@@ -427,12 +423,8 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
     is_complete = serializers.BooleanField(read_only=True)
     verification_fields_complete = serializers.BooleanField(read_only=True)
     profile_fields_complete = serializers.BooleanField(read_only=True)
-    verification_status = serializers.ChoiceField(
-        choices=CompanyProfile.VerificationStatus.choices, read_only=True
-    )
-    approval_status = serializers.ChoiceField(
-        choices=CompanyProfile.ApprovalStatus.choices, required=False
-    )
+    verification_status = serializers.ChoiceField(choices=CompanyProfile.VerificationStatus.choices, read_only=True)
+    approval_status = serializers.ChoiceField(choices=CompanyProfile.ApprovalStatus.choices, required=False)
 
     class Meta:
         model = CompanyProfile
@@ -499,9 +491,7 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(TAX_IDENTIFICATION_NUMBER_VALIDATION_MESSAGE)
         exclude_pk = self.instance.pk if self.instance is not None else None
         if CompanyProfile.has_tax_identification_number(normalized, exclude_pk=exclude_pk):
-            raise serializers.ValidationError(
-                "A company with this tax identification number already exists."
-            )
+            raise serializers.ValidationError("A company with this tax identification number already exists.")
         return normalized
 
     def validate_company_registration_number(self, value):
@@ -512,9 +502,7 @@ class CompanyAdminSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(COMPANY_REGISTRATION_NUMBER_VALIDATION_MESSAGE)
         exclude_pk = self.instance.pk if self.instance is not None else None
         if CompanyProfile.has_company_registration_number(normalized, exclude_pk=exclude_pk):
-            raise serializers.ValidationError(
-                "A company with this registration number already exists."
-            )
+            raise serializers.ValidationError("A company with this registration number already exists.")
         return normalized
 
     def validate_director_phone_number(self, value):
@@ -555,13 +543,9 @@ class CompanyProfileSubmissionSerializer(serializers.Serializer):
                 {"accepted_terms_of_agreement": ["Accept the Terms of Agreement to continue."]}
             )
         if not attrs["accepted_terms_of_use"]:
-            raise serializers.ValidationError(
-                {"accepted_terms_of_use": ["Accept the Terms of Use to continue."]}
-            )
+            raise serializers.ValidationError({"accepted_terms_of_use": ["Accept the Terms of Use to continue."]})
         missing_documents = [
-            slug
-            for slug in COMPANY_LEGAL_DOCUMENT_SLUGS
-            if slug not in set(attrs.get("accepted_documents", []))
+            slug for slug in COMPANY_LEGAL_DOCUMENT_SLUGS if slug not in set(attrs.get("accepted_documents", []))
         ]
         if missing_documents:
             raise serializers.ValidationError(

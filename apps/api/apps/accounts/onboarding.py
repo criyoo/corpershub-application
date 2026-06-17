@@ -31,7 +31,8 @@ def sync_company_approval_status(company: CompanyProfile) -> None:
     if company_ready_for_approval(company):
         target_status = (
             CompanyProfile.ApprovalStatus.PENDING
-            if company.approval_status in {
+            if company.approval_status
+            in {
                 CompanyProfile.ApprovalStatus.UNSUBMITTED,
                 CompanyProfile.ApprovalStatus.REJECTED,
             }
@@ -49,7 +50,8 @@ def sync_corper_approval_status(corper: CorperProfile) -> None:
     if corper_ready_for_approval(corper):
         target_status = (
             CorperProfile.ApprovalStatus.PENDING
-            if corper.approval_status in {
+            if corper.approval_status
+            in {
                 CorperProfile.ApprovalStatus.UNSUBMITTED,
                 CorperProfile.ApprovalStatus.REJECTED,
             }

@@ -21,9 +21,7 @@ class CompanyProfile(UUIDPrimaryKeyModel):
         APPROVED = "approved", "Approved"
         REJECTED = "rejected", "Rejected"
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_profile"
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="company_profile")
     company_name = models.CharField(max_length=255)
     company_registration_number = models.CharField(max_length=120)
     company_registration_date = models.DateField(null=True, blank=True)
@@ -155,9 +153,7 @@ class CompanyProfile(UUIDPrimaryKeyModel):
     @property
     def terms_accepted(self) -> bool:
         if self.legal_acceptances:
-            return has_accepted_all_required_legal_documents(
-                self.legal_acceptances, COMPANY_LEGAL_DOCUMENT_SLUGS
-            )
+            return has_accepted_all_required_legal_documents(self.legal_acceptances, COMPANY_LEGAL_DOCUMENT_SLUGS)
         return bool(self.terms_of_agreement_accepted_at and self.terms_of_use_accepted_at)
 
     @property
@@ -170,22 +166,14 @@ class CompanyProfile(UUIDPrimaryKeyModel):
 
     def save(self, *args, **kwargs):
         self.company_name = str(self.company_name or "").strip()
-        self.company_registration_number = normalize_company_registration_number(
-            self.company_registration_number
-        )
-        self.tax_identification_number = normalize_tax_identification_number(
-            self.tax_identification_number
-        )
+        self.company_registration_number = normalize_company_registration_number(self.company_registration_number)
+        self.tax_identification_number = normalize_tax_identification_number(self.tax_identification_number)
         super().save(*args, **kwargs)
 
     @property
     def next_profile_path(self) -> str:
-        if (
-            not self.verification_fields_complete
-            or (
-                self.terms_accepted
-                and self.verification_status != self.VerificationStatus.VERIFIED
-            )
+        if not self.verification_fields_complete or (
+            self.terms_accepted and self.verification_status != self.VerificationStatus.VERIFIED
         ):
             return "/company/verification"
         if not self.terms_accepted:

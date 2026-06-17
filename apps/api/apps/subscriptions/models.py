@@ -40,12 +40,8 @@ class UserSubscription(UUIDPrimaryKeyModel):
         CANCELLED = "cancelled", "Cancelled"
         EXPIRED = "expired", "Expired"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions"
-    )
-    plan = models.ForeignKey(
-        SubscriptionPlan, on_delete=models.PROTECT, related_name="subscriptions"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions")
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT, related_name="subscriptions")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.TRIAL)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField(null=True, blank=True)

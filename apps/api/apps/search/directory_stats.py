@@ -11,9 +11,7 @@ def build_directory_stats(*, role: str) -> dict[str, int]:
         approved_companies = CompanyProfile.objects.filter(
             verification_status=CompanyProfile.VerificationStatus.VERIFIED,
             approval_status=CompanyProfile.ApprovalStatus.APPROVED,
-        ).filter(
-            CompanyProfile.directory_visibility_q()
-        )
+        ).filter(CompanyProfile.directory_visibility_q())
         active_count = approved_companies.filter(user__is_active=True).count()
         total_count = approved_companies.count()
         online_count = approved_companies.filter(
@@ -41,11 +39,7 @@ def build_directory_stats(*, role: str) -> dict[str, int]:
         }
 
     active_count = User.objects.filter(role=role, is_active=True).count()
-    total_count = (
-        UserRoleRegistrationTotal.objects.filter(role=role)
-        .values_list("total_registered", flat=True)
-        .first()
-    )
+    total_count = UserRoleRegistrationTotal.objects.filter(role=role).values_list("total_registered", flat=True).first()
     online_count = User.objects.filter(
         role=role,
         is_active=True,

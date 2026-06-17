@@ -20,9 +20,7 @@ class VerificationAttempt(UUIDPrimaryKeyModel):
         FAILED = "failed", "Failed"
         REJECTED = "rejected", "Rejected"
 
-    corper = models.ForeignKey(
-        "corpers.CorperProfile", on_delete=models.CASCADE, related_name="verification_attempts"
-    )
+    corper = models.ForeignKey("corpers.CorperProfile", on_delete=models.CASCADE, related_name="verification_attempts")
     verification_type = models.CharField(max_length=20, choices=VerificationType.choices)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     submitted_value_masked = models.CharField(max_length=255, blank=True)
@@ -83,9 +81,7 @@ class VerificationAttempt(UUIDPrimaryKeyModel):
                 corper.mobile_number = str(biodata.get("mobile_number", "")).strip()
                 corper.state_of_origin = str(biodata.get("state_of_origin", "")).strip()
                 corper.country_of_birth = str(biodata.get("country_of_birth", "")).strip()
-                corper.university_matriculation_number = str(
-                    biodata.get("university_matriculation_number", "")
-                ).strip()
+                corper.university_matriculation_number = str(biodata.get("university_matriculation_number", "")).strip()
                 fields_to_update.extend(
                     [
                         "full_name",

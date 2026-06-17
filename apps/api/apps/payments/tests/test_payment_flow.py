@@ -1,4 +1,3 @@
-import base64
 import hashlib
 import hmac
 import json
@@ -26,6 +25,7 @@ from apps.subscriptions.services import calculate_subscription_end, ensure_trial
 from apps.subscriptions.constants import SUBSCRIPTION_PLAN_PRICES as billing_plans
 
 free, three, six, twelve = billing_plans.keys()
+
 
 def build_flutterwave_checkout(reference: str) -> dict:
     return {
@@ -308,9 +308,7 @@ class PaymentFlowTests(APITestCase):
             response.data["checkout"]["authorization_url"],
             "https://checkout.flutterwave.com/pay/cc-flutterwaveendpoint123",
         )
-        record = FlutterwavePaymentRecord.objects.get(
-            internal_payment_id=response.data["transaction"]["id"]
-        )
+        record = FlutterwavePaymentRecord.objects.get(internal_payment_id=response.data["transaction"]["id"])
         self.assertEqual(record.tx_ref, response.data["transaction"]["reference"])
         self.assertEqual(record.customer_email, self.corper_user.email)
         self.assertEqual(record.status, PaymentTransaction.Status.PENDING)
@@ -840,9 +838,7 @@ class PaymentFlowTests(APITestCase):
             },
         }
         raw_body = json.dumps(payload).encode("utf-8")
-        signature = hmac.new(
-            b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256).hexdigest()
 
         response = self.client.post(
             "/api/payments/webhooks/flutterwave/",
@@ -890,7 +886,9 @@ class PaymentFlowTests(APITestCase):
 
     @override_settings(FLUTTERWAVE_WEBHOOK_SECRET_HASH="webhook-secret-hash")
     @patch.object(FlutterwaveGateway, "query_payment_status", side_effect=ValueError("v4 verification unavailable"))
-    def test_flutterwave_webhook_records_event_when_verification_fails_for_async_payment_methods(self, mock_query_status):
+    def test_flutterwave_webhook_records_event_when_verification_fails_for_async_payment_methods(
+        self, mock_query_status
+    ):
         with patch.object(
             FlutterwaveGateway,
             "initialize_payment",
@@ -921,9 +919,7 @@ class PaymentFlowTests(APITestCase):
             },
         }
         raw_body = json.dumps(payload).encode("utf-8")
-        signature = hmac.new(
-            b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256).hexdigest()
 
         response = self.client.post(
             "/api/payments/webhooks/flutterwave/",
@@ -957,9 +953,7 @@ class PaymentFlowTests(APITestCase):
             },
         }
         raw_body = json.dumps(payload).encode("utf-8")
-        signature = hmac.new(
-            b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256).hexdigest()
 
         response = self.client.post(
             "/api/payments/webhooks/flutterwave/",
@@ -1051,9 +1045,7 @@ class PaymentFlowTests(APITestCase):
 
         for payload in (pending_payload, success_payload):
             raw_body = json.dumps(payload).encode("utf-8")
-            signature = hmac.new(
-                b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256
-            ).hexdigest()
+            signature = hmac.new(b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256).hexdigest()
             response = self.client.post(
                 "/api/payments/webhooks/flutterwave/",
                 data=raw_body,
@@ -1253,7 +1245,10 @@ class PaymentFlowTests(APITestCase):
         self.assertEqual(checkout["flutterwave"]["payment_options"], "card,banktransfer,ussd")
         self.assertEqual(checkout["flutterwave"]["customer"]["name"], "Ada Corpers")
         self.assertEqual(checkout["flutterwave"]["customer"]["phone_number"], "+2348031234567")
-        self.assertEqual(checkout["redirect_url"], "https://dev.corpershub.ng/billing/status?gateway=flutterwave&reference=CC-HEADERS123")
+        self.assertEqual(
+            checkout["redirect_url"],
+            "https://dev.corpershub.ng/billing/status?gateway=flutterwave&reference=CC-HEADERS123",
+        )
 
     @override_settings(
         FLUTTERWAVE_PUBLIC_KEY="",
@@ -1319,9 +1314,7 @@ class PaymentFlowTests(APITestCase):
 
         request = mock_urlopen.call_args.args[0]
         raw_body = b'{"event":"charge.completed"}'
-        signature = hmac.new(
-            b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(b"webhook-secret-hash", raw_body, digestmod=hashlib.sha256).hexdigest()
 
         self.assertEqual(
             request.full_url,

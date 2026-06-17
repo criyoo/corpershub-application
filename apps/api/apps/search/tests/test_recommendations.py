@@ -82,9 +82,7 @@ class CorperRecommendationSearchTests(APITestCase):
         matched_corper.preferred_sector = "Fintech"
         matched_corper.preferred_placement_type = "Full-time / Hybrid"
         matched_corper.preferred_monthly_allowance = "N50,000-N100,000"
-        matched_corper.preferred_organization_experience = (
-            "Spreadsheet reporting and operations support."
-        )
+        matched_corper.preferred_organization_experience = "Spreadsheet reporting and operations support."
         self._make_discoverable(
             matched_corper,
             matric_no="UNILAG/BUS/001",
@@ -216,9 +214,7 @@ class CorperRecommendationSearchTests(APITestCase):
 
         list_response = self.client.get("/api/search/corpers/")
         self.assertEqual(list_response.status_code, 200)
-        list_scores = {
-            result["id"]: result["match_score"] for result in list_response.data["results"]
-        }
+        list_scores = {result["id"]: result["match_score"] for result in list_response.data["results"]}
 
         matched_response = self.client.get(f"/api/corpers/directory/{self.matched_corper.id}/")
         close_response = self.client.get(f"/api/corpers/directory/{self.close_corper.id}/")
@@ -424,25 +420,16 @@ class CompanyRecommendationSearchTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         results = response.data["results"]
         self.assertEqual(results[0]["id"], str(self.matching_company.id))
-        self.assertTrue(
-            any(
-                "Located in your posting state" in reason
-                for reason in results[0]["match_reasons"]
-            )
-        )
+        self.assertTrue(any("Located in your posting state" in reason for reason in results[0]["match_reasons"]))
 
     def test_company_directory_detail_uses_same_recommendation_score(self):
         self.client.force_authenticate(self.corper_user)
 
         list_response = self.client.get("/api/search/companies/")
         self.assertEqual(list_response.status_code, 200)
-        list_scores = {
-            result["id"]: result["match_score"] for result in list_response.data["results"]
-        }
+        list_scores = {result["id"]: result["match_score"] for result in list_response.data["results"]}
 
-        matched_response = self.client.get(
-            f"/api/companies/directory/{self.matching_company.id}/"
-        )
+        matched_response = self.client.get(f"/api/companies/directory/{self.matching_company.id}/")
         close_response = self.client.get(f"/api/companies/directory/{self.close_company.id}/")
 
         self.assertEqual(matched_response.status_code, 200)

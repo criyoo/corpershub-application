@@ -17,11 +17,10 @@ from apps.accounts.models import EmailOTP, PendingSignup, User
 from apps.accounts.services import (
     archive_deleted_user,
     complete_signup_verification,
+    consume_valid_otp,
     create_or_update_pending_signup,
     consume_company_settings_otp,
-    deleted_account_biodata_exists,
     deleted_account_email_exists,
-    deleted_account_nin_exists,
     get_password_reset_otp_from_token,
     get_valid_otp,
     issue_company_settings_otp,
@@ -60,9 +59,7 @@ class CompanyRegistrationNumberValidationMixin:
         return normalized
 
 
-class CompanyRegistrationLookupSerializer(
-    CompanyRegistrationNumberValidationMixin, serializers.Serializer
-):
+class CompanyRegistrationLookupSerializer(CompanyRegistrationNumberValidationMixin, serializers.Serializer):
     company_registration_number = serializers.CharField(max_length=120)
 
     def create(self, validated_data):
@@ -175,16 +172,12 @@ class AdminOTPVerifySerializer(serializers.Serializer):
 
         pending_signup = PendingSignup.objects.filter(email=email).first()
         if not pending_signup or pending_signup.role != User.Role.ADMIN:
-            raise serializers.ValidationError(
-                {"email": ["No pending admin registration found for this email."]}
-            )
+            raise serializers.ValidationError({"email": ["No pending admin registration found for this email."]})
 
         if User.objects.filter(email__iexact=email).exists():
-            raise serializers.ValidationError(
-                {"email": ["Email already registered, please login to account."]}
-            )
+            raise serializers.ValidationError({"email": ["Email already registered, please login to account."]})
 
-        otp = consume_valid_otp(email=email, code=code, purpose=EmailOTP.Purpose.SIGNUP)
+        consume_valid_otp(email=email, code=code, purpose=EmailOTP.Purpose.SIGNUP)
 
         first_admin = get_primary_admin_user()
         admin_request = None
@@ -231,13 +224,19 @@ class AdminOTPVerifySerializer(serializers.Serializer):
                 send_admin_request_notification(request=admin_request, admin_user=first_admin)
             except Exception:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.exception(
                     "Unable to send admin registration request notification",
-                    extra={"request_id": str(admin_request.id), "email": admin_request.email, "admin_email": first_admin.email},
+                    extra={
+                        "request_id": str(admin_request.id),
+                        "email": admin_request.email,
+                        "admin_email": first_admin.email,
+                    },
                 )
             else:
                 from django.utils import timezone
+
                 admin_request.notification_sent_at = timezone.now()
                 admin_request.save(update_fields=["notification_sent_at", "updated_at"])
 
@@ -788,9 +787,7 @@ class CompanySettingsOTPRequestSerializer(serializers.Serializer):
                     }
                 )
             if User.objects.filter(email=normalized_email).exclude(pk=user.pk).exists():
-                raise serializers.ValidationError(
-                    {"new_email": ["An account with this email already exists."]}
-                )
+                raise serializers.ValidationError({"new_email": ["An account with this email already exists."]})
             attrs["new_email"] = normalized_email
             target_email = normalized_email
         elif action == self.ACTION_CHANGE_MOBILE_NUMBER:

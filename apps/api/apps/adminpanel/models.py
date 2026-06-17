@@ -18,9 +18,7 @@ class PlatformOption(UUIDPrimaryKeyModel):
 
     class Meta:
         ordering = ["category", "label"]
-        constraints = [
-            models.UniqueConstraint(fields=["category", "value"], name="unique_platform_option")
-        ]
+        constraints = [models.UniqueConstraint(fields=["category", "value"], name="unique_platform_option")]
 
 
 class AdminRegistrationRequest(UUIDPrimaryKeyModel):
