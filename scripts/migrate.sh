@@ -70,13 +70,17 @@ app_command() {
 
 build_task_definition_payload() {
   local image_uri="$1"
+  local source_file="$2"
 
-  python3 - "$image_uri" <<'PY'
+  python3 - "$image_uri" "$source_file" <<'PY'
 import json
 import sys
 
 image_uri = sys.argv[1]
-task_definition = json.load(sys.stdin)
+source_file = sys.argv[2]
+
+with open(source_file, "r", encoding="utf-8") as handle:
+    task_definition = json.load(handle)
 
 allowed_keys = [
     "family",
@@ -128,24 +132,25 @@ resolve_task_definition_arn() {
     fail "Could not resolve ECS task definition ${MIGRATION_TASK_DEFINITION}."
 
   if [ -n "${DEPLOY_IMAGE_URI:-}" ]; then
-    local task_definition_json
+    local source_file
     local payload_file
 
-    task_definition_json="$(aws_with_auth ecs describe-task-definition \
+    source_file="$(mktemp)"
+    aws_with_auth ecs describe-task-definition \
       --region "${AWS_REGION}" \
       --task-definition "${base_task_definition_arn}" \
       --query 'taskDefinition' \
-      --output json)"
+      --output json >"${source_file}"
 
     payload_file="$(mktemp)"
-    printf '%s' "${task_definition_json}" | build_task_definition_payload "${DEPLOY_IMAGE_URI}" >"${payload_file}"
+    build_task_definition_payload "${DEPLOY_IMAGE_URI}" "${source_file}" >"${payload_file}"
 
     RUN_TASK_DEFINITION_ARN="$(aws_with_auth ecs register-task-definition \
       --region "${AWS_REGION}" \
       --cli-input-json "file://${payload_file}" \
       --query 'taskDefinition.taskDefinitionArn' \
       --output text)"
-    rm -f "${payload_file}"
+    rm -f "${source_file}" "${payload_file}"
   else
     RUN_TASK_DEFINITION_ARN="${base_task_definition_arn}"
   fi
