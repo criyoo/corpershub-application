@@ -9,6 +9,7 @@ set_aws_auth_mode
 
 require_cmd python3
 require_cmd tr
+require_cmd mktemp
 # ensure_aws_auth
 
 ECS_CLUSTER_NAME="${NAME_PREFIX}-cluster"
@@ -67,6 +68,105 @@ app_command() {
   printf 'cd /app && %s' "${command}"
 }
 
+build_task_definition_payload() {
+  local image_uri="$1"
+
+  python3 - "$image_uri" <<'PY'
+import json
+import sys
+
+image_uri = sys.argv[1]
+task_definition = json.load(sys.stdin)
+
+allowed_keys = [
+    "family",
+    "taskRoleArn",
+    "executionRoleArn",
+    "networkMode",
+    "containerDefinitions",
+    "volumes",
+    "placementConstraints",
+    "requiresCompatibilities",
+    "cpu",
+    "memory",
+    "runtimePlatform",
+    "pidMode",
+    "ipcMode",
+    "proxyConfiguration",
+    "inferenceAccelerators",
+    "ephemeralStorage",
+]
+
+payload = {
+    key: task_definition[key]
+    for key in allowed_keys
+    if key in task_definition and task_definition[key] not in (None, [], {})
+}
+
+for container in payload.get("containerDefinitions", []):
+    if container.get("name") == "migration":
+        container["image"] = image_uri
+
+print(json.dumps(payload))
+PY
+}
+
+resolve_task_definition_arn() {
+  if [ -n "${RUN_TASK_DEFINITION_ARN:-}" ]; then
+    printf '%s\n' "${RUN_TASK_DEFINITION_ARN}"
+    return
+  fi
+
+  local base_task_definition_arn
+  base_task_definition_arn="$(aws_with_auth ecs describe-task-definition \
+    --region "${AWS_REGION}" \
+    --task-definition "${MIGRATION_TASK_DEFINITION}" \
+    --query 'taskDefinition.taskDefinitionArn' \
+    --output text)"
+
+  [ -n "${base_task_definition_arn}" ] && [ "${base_task_definition_arn}" != "None" ] ||
+    fail "Could not resolve ECS task definition ${MIGRATION_TASK_DEFINITION}."
+
+  if [ -n "${DEPLOY_IMAGE_URI:-}" ]; then
+    local task_definition_json
+    local payload_file
+
+    task_definition_json="$(aws_with_auth ecs describe-task-definition \
+      --region "${AWS_REGION}" \
+      --task-definition "${base_task_definition_arn}" \
+      --query 'taskDefinition' \
+      --output json)"
+
+    payload_file="$(mktemp)"
+    printf '%s' "${task_definition_json}" | build_task_definition_payload "${DEPLOY_IMAGE_URI}" >"${payload_file}"
+
+    RUN_TASK_DEFINITION_ARN="$(aws_with_auth ecs register-task-definition \
+      --region "${AWS_REGION}" \
+      --cli-input-json "file://${payload_file}" \
+      --query 'taskDefinition.taskDefinitionArn' \
+      --output text)"
+    rm -f "${payload_file}"
+  else
+    RUN_TASK_DEFINITION_ARN="${base_task_definition_arn}"
+  fi
+
+  [ -n "${RUN_TASK_DEFINITION_ARN}" ] && [ "${RUN_TASK_DEFINITION_ARN}" != "None" ] ||
+    fail "Could not prepare ECS task definition ${MIGRATION_TASK_DEFINITION}."
+
+  printf '%s\n' "${RUN_TASK_DEFINITION_ARN}"
+}
+
+print_task_failure_summary() {
+  local task_arn="$1"
+
+  aws_with_auth ecs describe-tasks \
+    --region "${AWS_REGION}" \
+    --cluster "${ECS_CLUSTER_NAME}" \
+    --tasks "${task_arn}" \
+    --query 'tasks[0].{stopCode:stopCode,stoppedReason:stoppedReason,containerName:containers[0].name,containerReason:containers[0].reason,exitCode:containers[0].exitCode}' \
+    --output json >&2 || true
+}
+
 print_task_logs() {
   local task_arn="$1"
   local task_id="${task_arn##*/}"
@@ -101,14 +201,7 @@ run_task() {
 
   overrides="$(task_overrides "${command}")"
   network_configuration="awsvpcConfiguration={subnets=[$(printf '%s' "${PUBLIC_SUBNET_IDS}" | tr '\t ' ',')],securityGroups=[${APP_SECURITY_GROUP_ID}],assignPublicIp=ENABLED}"
-  task_definition_arn="$(aws_with_auth ecs describe-task-definition \
-    --region "${AWS_REGION}" \
-    --task-definition "${MIGRATION_TASK_DEFINITION}" \
-    --query 'taskDefinition.taskDefinitionArn' \
-    --output text)"
-
-  [ -n "${task_definition_arn}" ] && [ "${task_definition_arn}" != "None" ] ||
-    fail "Could not resolve ECS task definition ${MIGRATION_TASK_DEFINITION}."
+  task_definition_arn="$(resolve_task_definition_arn)"
 
   task_arn="$(aws_with_auth ecs run-task \
     --region "${AWS_REGION}" \
@@ -142,6 +235,7 @@ run_task() {
     return 10
   fi
 
+  print_task_failure_summary "${task_arn}"
   print_task_logs "${task_arn}"
   fail "Task failed for command: ${command}"
 }

@@ -46,6 +46,7 @@ docker buildx build \
   --cache-to type=registry,ref="${REPOSITORY_URI}:buildcache",mode=max,oci-mediatypes=true,image-manifest=true \
   --provenance=false \
   --sbom=false \
+  --tag "${REPOSITORY_URI}:${IMAGE_TAG}" \
   --tag "${REPOSITORY_URI}:${STABLE_TAG}" \
   --push \
   "${API_DIR}"
@@ -55,6 +56,7 @@ if [ "${DEPLOY_ECS}" != "1" ]; then
 fi
 
 if [ "${RUN_MIGRATIONS}" = "1" ]; then
+  export DEPLOY_IMAGE_URI="${REPOSITORY_URI}:${IMAGE_TAG}"
   bash "${APPLICATION_ROOT}/scripts/migrate.sh" "${ENVIRONMENT}"
 fi
 
