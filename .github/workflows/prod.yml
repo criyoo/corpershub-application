@@ -93,17 +93,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ env.LINUX_PLATFORM }}
+
+      - name: Debug role ARN
+        run: echo "${{ vars.AWS_DEPLOY_ROLE_ARN }}"
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: docker/setup-qemu-action@v3
-        with:
-          platforms: ${{ env.LINUX_PLATFORM }}
-
       - name: Deploy API
-        run: bash scripts/deploy/api.sh prod
+        run: bash scripts/deploy/api.sh dev
 
       - name: Wait for API to be ready
         run: sleep 10
