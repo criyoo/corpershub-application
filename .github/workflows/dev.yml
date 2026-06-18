@@ -22,6 +22,7 @@ env:
   LINUX_PLATFORM: "arm64"
   PYTHON_VERSION: "3.12"
 
+
 jobs:
   lint-api:
     runs-on: ubuntu-latest
@@ -56,7 +57,6 @@ jobs:
           ruff format .
           ruff check .
 
-
   test-api:
     needs: lint-api
     runs-on: ubuntu-latest
@@ -83,7 +83,6 @@ jobs:
           source .venv/bin/activate
           cd apps/api
           python manage.py test --settings=config.settings.test
-
 
   deploy-api:
     needs: test-api
@@ -139,7 +138,6 @@ jobs:
       - name: Typecheck frontend
         run: npm run typecheck --workspace apps/web
 
-
   test-web:
     needs: lint-web
     runs-on: ubuntu-latest
@@ -163,7 +161,6 @@ jobs:
 
       - name: Test frontend
         run: npm run test --workspace apps/web
-
 
   build-web:
     needs: test-web
@@ -202,7 +199,6 @@ jobs:
             package-lock.json
           retention-days: 1
           include-hidden-files: true
-
 
   deploy-web:
     needs: build-web
