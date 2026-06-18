@@ -62,6 +62,11 @@ print(json.dumps({
 PY
 }
 
+app_command() {
+  local command="$1"
+  printf 'cd /app && %s' "${command}"
+}
+
 print_task_logs() {
   local task_arn="$1"
   local task_id="${task_arn##*/}"
@@ -92,15 +97,24 @@ run_task() {
   local overrides
   local task_arn
   local exit_code
+  local task_definition_arn
 
   overrides="$(task_overrides "${command}")"
   network_configuration="awsvpcConfiguration={subnets=[$(printf '%s' "${PUBLIC_SUBNET_IDS}" | tr '\t ' ',')],securityGroups=[${APP_SECURITY_GROUP_ID}],assignPublicIp=ENABLED}"
+  task_definition_arn="$(aws_with_auth ecs describe-task-definition \
+    --region "${AWS_REGION}" \
+    --task-definition "${MIGRATION_TASK_DEFINITION}" \
+    --query 'taskDefinition.taskDefinitionArn' \
+    --output text)"
+
+  [ -n "${task_definition_arn}" ] && [ "${task_definition_arn}" != "None" ] ||
+    fail "Could not resolve ECS task definition ${MIGRATION_TASK_DEFINITION}."
 
   task_arn="$(aws_with_auth ecs run-task \
     --region "${AWS_REGION}" \
     --cluster "${ECS_CLUSTER_NAME}" \
     --launch-type FARGATE \
-    --task-definition "${MIGRATION_TASK_DEFINITION}" \
+    --task-definition "${task_definition_arn}" \
     --network-configuration "${network_configuration}" \
     --overrides "${overrides}" \
     --query 'tasks[0].taskArn' \
@@ -132,7 +146,7 @@ run_task() {
   fail "Task failed for command: ${command}"
 }
 
-if run_task "python manage.py has_pending_migrations"; then
+if run_task "$(app_command "python manage.py has_pending_migrations")"; then
   pending_migrations=0
 else
   status=$?
@@ -144,11 +158,11 @@ else
 fi
 
 if [ "${pending_migrations}" = "1" ]; then
-  run_task "python manage.py migrate --noinput"
+  run_task "$(app_command "python manage.py migrate --noinput")"
 fi
 
-run_task "python manage.py sync_subscription_plans"
+run_task "$(app_command "python manage.py sync_subscription_plans")"
 
 if [ "${RUN_SEED_DEMO_DATA}" = "1" ]; then
-  run_task "python manage.py seed_demo_data"
+  run_task "$(app_command "python manage.py seed_demo_data")"
 fi
