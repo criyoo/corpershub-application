@@ -106,10 +106,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy API
-        run: bash scripts/deploy/api.sh dev
-
-      - name: Wait for API to be ready
-        run: sleep 10
+        run: bash scripts/deploy/api.sh prod
 
       
   lint-web:

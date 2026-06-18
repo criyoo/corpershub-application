@@ -107,9 +107,6 @@ jobs:
       - name: Deploy API
         run: bash scripts/deploy/api.sh dev
 
-      - name: Wait for API to be ready
-        run: sleep 10
-
 
   lint-web:
     needs: deploy-api
