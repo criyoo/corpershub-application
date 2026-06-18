@@ -74,7 +74,7 @@ describe_app_service() {
 
 service_exists() {
   [[ "$(describe_app_service "$1" \
-    | python3 -c 'import json,sys; print(json.load(sys.stdin).get("status", ""))')" == "ACTIVE" ]]
+    | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data.get("status", "") if isinstance(data, dict) else "")')" == "ACTIVE" ]]
 }
 
 resolve_public_subnets() {

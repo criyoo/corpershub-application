@@ -20,7 +20,6 @@ WAIT_FOR_STABLE="${WAIT_FOR_STABLE:-1}"
 API_DESIRED_COUNT="${API_DESIRED_COUNT:-1}"
 BUILDER_NAME="${BUILDER_NAME:-corpershub-multiarch}"
 DOCKER_PLATFORM="linux/arm64"
-STABLE_TAG="${ENVIRONMENT}"
 ECS_CLUSTER_NAME="${NAME_PREFIX}-cluster"
 ECR_REPOSITORY_NAME="${NAME_PREFIX}-api"
 
@@ -46,8 +45,7 @@ docker buildx build \
   --cache-to type=registry,ref="${REPOSITORY_URI}:buildcache",mode=max,oci-mediatypes=true,image-manifest=true \
   --provenance=false \
   --sbom=false \
-  --tag "${REPOSITORY_URI}:${IMAGE_TAG}" \
-  --tag "${REPOSITORY_URI}:${STABLE_TAG}" \
+  --tag "${REPOSITORY_URI}:${ENVIRONMENT}" \
   --push \
   "${API_DIR}"
 
@@ -56,7 +54,7 @@ if [ "${DEPLOY_ECS}" != "1" ]; then
 fi
 
 if [ "${RUN_MIGRATIONS}" = "1" ]; then
-  export DEPLOY_IMAGE_URI="${REPOSITORY_URI}:${IMAGE_TAG}"
+  export DEPLOY_IMAGE_URI="${REPOSITORY_URI}:${ENVIRONMENT}"
   bash "${APPLICATION_ROOT}/scripts/migrate.sh" "${ENVIRONMENT}"
 fi
 
