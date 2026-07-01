@@ -15,9 +15,5 @@
   "dependencies": {
     "typescript": "^6.0.3",
     "whatwg-encoding": "file:packages/whatwg-encoding"
-  },
-  "engines": {
-    "node": ">=24.18.0",
-    "npm": ">=11.16.0"
   }
 }
