@@ -68,27 +68,52 @@ export function formatSubscriptionPlanLabel(name: string | null | undefined) {
 }
 
 export function resolveCurrentSubscription(subscriptions: BillingSubscription[]) {
-  const current =
-    subscriptions.find((subscription) => subscription.status === "active") ??
-    subscriptions.find((subscription) => subscription.status === "trial") ??
-    subscriptions.find((subscription) => subscription.status === "cancelled") ??
-    subscriptions.find(
-      (subscription) => !["pending", "past_due", "expired"].includes(subscription.status)
-    ) ??
-    subscriptions[0];
-  return current ?? null;
+  const activeSubscription = subscriptions.find(
+    (subscription) => subscription.status === "active"
+  );
+  if (activeSubscription) {
+    return activeSubscription;
+  }
+
+  const trialSubscription = subscriptions.find(
+    (subscription) => subscription.status === "trial"
+  );
+  if (trialSubscription) {
+    return trialSubscription;
+  }
+
+  // Only consider cancelled subscriptions that were once active (have ends_at set)
+  const activeCancelledSubscription = subscriptions.find(
+    (subscription) => subscription.status === "cancelled" && subscription.ends_at !== null
+  );
+  if (activeCancelledSubscription) {
+    return activeCancelledSubscription;
+  }
+
+  // No valid current subscription found
+  return null;
 }
 
 export function resolveSubscriptionStatusSnapshot(subscriptions: BillingSubscription[]) {
-  const current = resolveCurrentSubscription(subscriptions);
+  const active = subscriptions.find((subscription) => subscription.status === "active");
+  const trial = subscriptions.find((subscription) => subscription.status === "trial");
+  const cancelled = subscriptions.find(
+    (subscription) => subscription.status === "cancelled" && subscription.ends_at !== null
+  );
+
+  const current = active ?? trial ?? cancelled;
   if (current?.ends_at) {
     return current;
   }
 
+  // If no valid current subscription, return the latest subscription with ends_at for status info
+  // This covers the case where there's a cancelled-pending that needs history display
   const latestCompletedSubscription =
     subscriptions.find((subscription) => Boolean(subscription.ends_at)) ?? null;
 
-  return latestCompletedSubscription ?? current;
+  // If still no valid subscription, return the latest subscription anyway for display
+  // (e.g., to show cancelled-pending in status section)
+  return latestCompletedSubscription ?? current ?? subscriptions[0] ?? null;
 }
 
 export function getBillingPathForRole(role: UserRole) {
@@ -113,7 +138,10 @@ export function isBrowseRestrictionMessage(message: string | null | undefined) {
 
 export function hasPaidCorperAccess(subscriptions: BillingSubscription[]) {
   return subscriptions.some(
-    (subscription) => ["active", "cancelled"].includes(subscription.status) && subscription.plan.amount_naira > 0
+    (subscription) =>
+      subscription.plan.amount_naira > 0 &&
+      (subscription.status === "active" ||
+        (subscription.status === "cancelled" && subscription.ends_at !== null))
   );
 }
 

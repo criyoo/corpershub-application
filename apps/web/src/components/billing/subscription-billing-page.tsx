@@ -197,11 +197,15 @@ function formatDateTime(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-function getBrowseAccessMessage(currentPlan: BillingPlan | null, currentStatus: string | null) {
+function getBrowseAccessMessage(
+  currentPlan: BillingPlan | null,
+  currentStatus: string | null,
+  hasEndsAt: boolean
+) {
   if (currentStatus === "active") {
     return `Active plan, explore!.`;
   }
-  if (currentStatus === "cancelled") {
+  if (currentStatus === "cancelled" && hasEndsAt) {
     return `This plan has been cancelled and stays active until its expiry date.`;
   }
   if (currentStatus === "trial") {
@@ -242,7 +246,7 @@ function formatMonthlyEquivalent(plan: BillingPlan) {
   if (!months) {
     return formatNaira(plan.amount_naira);
   }
-  return `~${formatNaira(Math.round(plan.amount_naira / months))}/mo`;
+  return `${formatNaira(Math.round(plan.amount_naira / months))}/mo`;
 }
 
 function getPlanDescriptionText(plan: BillingPlan) {
@@ -293,7 +297,9 @@ function getPaidPlanAction({
 }) {
   if (
     currentSubscription &&
-    ["active", "trial", "cancelled"].includes(currentSubscription.status)
+    (currentSubscription.status === "active" ||
+      currentSubscription.status === "trial" ||
+      (currentSubscription.status === "cancelled" && currentSubscription.ends_at !== null))
   ) {
     const isCurrentPlan = currentSubscription.plan.code === plan.code;
     return {
@@ -701,7 +707,10 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
   const paidPlans = (plans.data?.results ?? []).filter((plan) => plan.code !== "free");
   const currentPlan = plans.data?.results.find((plan) => plan.code === currentSubscription?.plan.code) ?? null;
   const currentStatus = currentSubscription?.status ?? null;
-  const browseUnlocked = currentStatus === "active" || currentStatus === "trial" || currentStatus === "cancelled";
+  const browseUnlocked =
+    currentStatus === "active" ||
+    currentStatus === "trial" ||
+    (currentStatus === "cancelled" && currentSubscription?.ends_at !== null);
 
   async function continuePayment(attempt: PaymentAttempt) {
     const checkout = attempt.provider_payload?.checkout;
@@ -744,7 +753,8 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
     const hasCurrentPaidPlan =
       currentSubscription &&
       currentSubscription.plan.amount_naira > 0 &&
-      ["active", "cancelled"].includes(currentSubscription.status);
+      (currentSubscription.status === "active" ||
+        (currentSubscription.status === "cancelled" && currentSubscription.ends_at !== null));
 
     if (hasCurrentPaidPlan && currentSubscription.plan.code !== planCode && selectedPlan) {
       setPlanChangePrompt({
@@ -835,15 +845,15 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
       <div className="grid gap-4">
         <Card className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
           <div>
-            <Badge tone={browseUnlocked ? "success" : "warning"}>
-              {browseUnlocked ? "Browse unlocked" : "Browse locked"}
-            </Badge>
-            <h2 className="mt-4 font-display text-2xl text-white">
-              Plan: {formatSubscriptionPlanLabel(currentSubscription?.plan.name)}
-            </h2>
-            <p className="mt-3 max-w-1xl text-sm leading-7 text-mist">
-              {getBrowseAccessMessage(currentPlan, currentStatus)}
-            </p>
+<Badge tone={browseUnlocked ? "success" : "warning"}>
+               {browseUnlocked ? "Browse unlocked" : "Browse locked"}
+             </Badge>
+             <h2 className="mt-4 font-display text-2xl text-white">
+               Plan: {formatSubscriptionPlanLabel(currentSubscription?.plan.name)}
+             </h2>
+             <p className="mt-3 max-w-1xl text-sm leading-7 text-mist">
+               {getBrowseAccessMessage(currentPlan, currentStatus, Boolean(currentSubscription?.ends_at))}
+             </p>
           </div>
           <div className="rounded-[24px] border border-white/10 bg-[#07140E]/40 p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-lime">Current status</p>
@@ -881,8 +891,8 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
                 You can continue, cancel, or switch plans after cancelling
               </h2>
               <p className="mt-3 text-sm leading-7 text-mist">
-                Payment attempts are not permanent. If checkout was interrupted, continue the attempt below or
-                cancel it and start again.
+                Payment attempts are not permanent.<br/>
+                If checkout was interrupted, continue the attempt below or cancel it and start again.
               </p>
             </div>
 
@@ -946,7 +956,7 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
             currentSubscription?.plan.code === freePlan.code &&
             (currentSubscription.status === "active" ||
               currentSubscription.status === "trial" ||
-              currentSubscription.status === "cancelled");
+              (currentSubscription.status === "cancelled" && currentSubscription.ends_at !== null));
           const canStartFreeTrial =
             role === "corper" && subscriptionHistoryLoaded && !hasSubscriptionHistory;
           const statusLabel = isCurrentPlan ? { label: "Current plan", tone: "success" as const } : null;
@@ -994,7 +1004,7 @@ export function SubscriptionBillingPage({ role }: { role: UserRole }) {
               currentSubscription?.plan.code === plan.code &&
               (currentSubscription.status === "active" ||
                 currentSubscription.status === "trial" ||
-                currentSubscription.status === "cancelled");
+                (currentSubscription.status === "cancelled" && currentSubscription.ends_at !== null));
             const paidPlanAction = getPaidPlanAction({
               plan,
               currentSubscription,

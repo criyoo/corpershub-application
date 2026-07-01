@@ -13,8 +13,14 @@ require_cmd aws
 require_cmd python3
 require_cmd tr
 
-ADMIN_EMAIL="${ADMIN_EMAIL:-admin@corpershub.ng}"
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-ifG0dbi4mi}"
+if [ "${ENVIRONMENT}" = "dev" ]; then
+  ADMIN_EMAIL="admin@dev.corpershub.ng"
+  ADMIN_PASSWORD="ifG0dbi4mi"
+else
+  ADMIN_EMAIL="admin@corpershub.ng"
+  ADMIN_PASSWORD="$(openssl rand -hex 16)"
+fi
+
 ADMIN_START_DB_INSTANCE="${ADMIN_START_DB_INSTANCE:-1}"
 ADMIN_TASK_CONTAINER_NAME="${ADMIN_TASK_CONTAINER_NAME:-migration}"
 ECS_CLUSTER_NAME="${NAME_PREFIX}-cluster"
@@ -193,3 +199,14 @@ if [ "${task_exit_code}" == "0" ]; then
   echo "Admin user with email ${ADMIN_EMAIL} created successfully..."
 fi
 
+# Save Password in SSM Paramater Store
+save_admin_password() {
+  aws_with_auth ssm put-parameter \
+    --region "${AWS_REGION}" \
+    --name "/corpershub/secret/${ENVIRONMENT}/DJANGO_ADMIN_PASSWORD" \
+    --value "${ADMIN_PASSWORD}" \
+    --type "SecureString" \
+    --overwrite
+}
+
+save_admin_password
