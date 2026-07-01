@@ -25,10 +25,7 @@ env:
 
 
 jobs:
-
-
   lint-web:
-    needs: deploy-api
     runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
