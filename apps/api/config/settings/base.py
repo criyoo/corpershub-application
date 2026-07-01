@@ -62,11 +62,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "apps.common.middleware.HealthCheckCommonMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "apps.common.middleware.HealthCheckCommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -306,7 +306,7 @@ FLUTTERWAVE_V3_API_BASE_URL = env("FLUTTERWAVE_V3_API_BASE_URL", "https://api.fl
 FLUTTERWAVE_TOKEN_URL = (
     env("FLUTTERWAVE_TOKEN_URL") or "https://idp.flutterwave.com/realms/flutterwave/protocol/openid-connect/token"
 )
-FLUTTERWAVE_SETTLEMENT_BANK_NAME = env("FLUTTERWAVE_SETTLEMENT_BANK_NAME", "ProvidusBank PLC") or ""
+FLUTTERWAVE_SETTLEMENT_BANK_NAME = env("FLUTTERWAVE_SETTLEMENT_BANK_NAME", "Providus Bank") or ""
 FLUTTERWAVE_SETTLEMENT_ACCOUNT_NUMBER = env("FLUTTERWAVE_SETTLEMENT_ACCOUNT_NUMBER", "1309659188") or ""
 
 FREE_EMAIL_PROVIDERS = {
