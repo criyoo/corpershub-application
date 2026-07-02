@@ -1,4 +1,4 @@
-ENVIRONMENT ?= dev
+WORKSPACE ?= dev
 SHELL := /bin/bash
 BASH_CMD := $(AWS_RUN) bash
 
@@ -24,18 +24,21 @@ local-frontend-lint:
 local-frontend-build:
 	@npm run build --workspace apps/web
 
+
+# AWS Deployments
 api:
-	@bash scripts/deploy/api.sh $(ENVIRONMENT)
+	@bash scripts/deploy/api.sh $(WORKSPACE)
 
 web:
-	@bash scripts/deploy/web.sh $(ENVIRONMENT)
+	@bash scripts/deploy/web.sh $(WORKSPACE)
 
 invalidate:
-	INVALIDATE_ONLY=1 bash scripts/deploy/web.sh $(ENVIRONMENT)
+	INVALIDATE_ONLY=1 bash scripts/deploy/web.sh $(WORKSPACE)
 
 migrate:
-	@bash scripts/migrate.sh $(ENVIRONMENT)
+	@bash scripts/migrate.sh $(WORKSPACE)
 
 admin:
-	@bash scripts/admin.sh $(ENVIRONMENT)
+	@bash scripts/admin.sh $(WORKSPACE)
 
+deploy: api web migrate

@@ -21,6 +21,7 @@ RUN_SEED_DEMO_DATA="${RUN_SEED_DEMO_DATA:-0}"
 resolve_public_subnets
 resolve_app_security_group
 
+echo "Resolving database status..."
 db_status="$(aws_with_auth rds describe-db-instances \
   --region "${AWS_REGION}" \
   --db-instance-identifier "${DB_INSTANCE_IDENTIFIER}" \
@@ -31,6 +32,7 @@ db_status="$(aws_with_auth rds describe-db-instances \
 
 case "${db_status}" in
   available)
+    echo "database is available"
     ;;
   starting|backing-up|configuring-enhanced-monitoring|configuring-iam-database-auth|maintenance|modifying|rebooting|renaming|resetting-master-credentials|storage-optimization|upgrading)
     aws_with_auth rds wait db-instance-available \
@@ -38,6 +40,7 @@ case "${db_status}" in
       --db-instance-identifier "${DB_INSTANCE_IDENTIFIER}"
     ;;
   stopped|stopping)
+    echo "database has a status of stopped or stopping, existing....."
     exit 0
     ;;
   *)

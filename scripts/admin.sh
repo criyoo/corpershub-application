@@ -110,7 +110,6 @@ ensure_db_available() {
 }
 
 print_task_failure_summary() {
-  echo "printing task failure..."
   local task_arn="$1"
 
   aws_with_auth ecs describe-tasks \
@@ -122,7 +121,6 @@ print_task_failure_summary() {
 }
 
 print_task_logs() {
-  echo "printing logs.."
   local task_arn="$1"
   local task_id="${task_arn##*/}"
   local log_stream_name

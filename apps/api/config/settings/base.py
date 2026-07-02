@@ -30,7 +30,8 @@ def env_bool(key: str, default: bool = False) -> bool:
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", "django-insecure-corpershub-dev-key")
 DEBUG = env_bool("DJANGO_DEBUG", False)
-ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS", "*").split(",") if host.strip()]
+#ALLOWED_HOSTS = [host.strip() for host in env("DJANGO_ALLOWED_HOSTS", "*").split(",") if host.strip()]
+ALLOWED_HOSTS = os.environ["DJANGO_ALLOWED_HOSTS"].split(",")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
