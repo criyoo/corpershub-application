@@ -206,14 +206,13 @@ def get_current_browse_subscription(*, user, autocreate=True, now=None) -> UserS
     refresh_user_subscriptions(user=user, now=now)
 
     subscriptions = list(UserSubscription.objects.select_related("plan").filter(user=user))
-    for status in (
-        UserSubscription.Status.ACTIVE,
-        UserSubscription.Status.TRIAL,
-        UserSubscription.Status.CANCELLED,
-    ):
-        for subscription in subscriptions:
-            if subscription.status == status:
-                return subscription
+    for subscription in subscriptions:
+        if subscription.status == UserSubscription.Status.ACTIVE:
+            return subscription
+        if subscription.status == UserSubscription.Status.TRIAL:
+            return subscription
+        if subscription.status == UserSubscription.Status.CANCELLED and subscription.ends_at is not None:
+            return subscription
 
     return None
 
@@ -228,6 +227,7 @@ def get_current_paid_subscription(*, user, now=None) -> UserSubscription | None:
             user=user,
             status__in=[UserSubscription.Status.ACTIVE, UserSubscription.Status.CANCELLED],
             plan__price_kobo__gt=0,
+            ends_at__isnull=False,
         )
         .order_by("-created_at")
         .first()

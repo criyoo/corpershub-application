@@ -260,6 +260,8 @@ if [ "${pending_migrations}" = "1" ]; then
   run_task "$(app_command "python manage.py migrate --noinput")"
 fi
 
+run_task "$(app_command "python manage.py collectstatic --noinput --clear --verbosity=0")"
+
 run_task "$(app_command "python manage.py sync_subscription_plans")"
 
 if [ "${RUN_SEED_DEMO_DATA}" = "1" ]; then

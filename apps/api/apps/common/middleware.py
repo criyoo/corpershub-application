@@ -17,7 +17,8 @@ class HealthCheckCommonMiddleware:
         return self.get_response(request)
 
     def process_exception(self, request, exception):
-        if request.path_info.rstrip("/") in self.HEALTH_PATH_PREFIXES:
+        # Handle DisallowedHost exceptions for health check endpoints
+        if request.path.split("/")[1] in ("health", "healthz"):
             from django.core.exceptions import DisallowedHost
 
             if isinstance(exception, DisallowedHost):
