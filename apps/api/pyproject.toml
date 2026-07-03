@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["migrations", "media", "staticfiles", "uploads", ".pytest_cache", "__pycache__"]
+
+[tool.ruff.lint]
+ignore = ["E501", "E203"]
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E501", "E203"]
+exclude = [".git", "__pycache__", ".pytest_cache", "media", "staticfiles", "uploads", "*/migrations/*"]

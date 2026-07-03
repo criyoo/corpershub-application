@@ -1,0 +1,222 @@
+name: Deploy development
+
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: deploy-development
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: "eu-west-1"
+  AWS_USE_PROFILE: "0"
+  IMAGE_TAG: ${{ github.sha }}
+  LINUX_PLATFORM: "arm64"
+  PYTHON_VERSION: "3.12"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  NODE_VERSION: "24.0"
+
+
+jobs:
+  lint-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
+
+      - name: Lint frontend
+        run: npm run lint --workspace apps/web
+
+      - name: Typecheck frontend
+        run: npm run typecheck --workspace apps/web
+
+  test-web:
+    needs: lint-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
+
+      - name: Test frontend
+        run: npm run test --workspace apps/web
+
+  build-web:
+    needs: test-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          npm ci
+          node scripts/ensure-rollup-native.cjs apps/web
+
+      - name: Build frontend
+        run: npm run build --workspace apps/web
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: |
+            apps/web/.next
+            apps/web/public
+            apps/web/package.json
+            apps/web/next.config.*
+            package.json
+            package-lock.json
+          retention-days: 1
+          include-hidden-files: true
+
+  deploy-web:
+    needs: build-web
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download web build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: .
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Web
+        run: bash scripts/deploy/web.sh dev
+
+  lint-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+
+      - name: Check migrations
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          python manage.py makemigrations --check --dry-run --settings=config.settings.test
+
+      - name: Lint backend
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          ruff format .
+          ruff check .
+
+  test-api:
+    needs: lint-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "${{ env.PYTHON_VERSION }}"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+
+      - name: Run backend tests
+        run: |
+          source .venv/bin/activate
+          cd apps/api
+          python manage.py test --settings=config.settings.test
+
+  deploy-api:
+    needs: test-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ env.LINUX_PLATFORM }}
+
+      - name: Debug role ARN
+        run: echo "${{ vars.AWS_DEPLOY_ROLE_ARN }}"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy API
+        run: bash scripts/deploy/api.sh dev
+
+
