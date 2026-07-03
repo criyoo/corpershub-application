@@ -18,7 +18,7 @@ if [ "${ENVIRONMENT}" = "dev" ]; then
   ADMIN_PASSWORD="ifG0dbi4mi"
 else
   ADMIN_EMAIL="admin@corpershub.ng"
-  ADMIN_PASSWORD="$(openssl rand -hex 16)"
+  ADMIN_PASSWORD="$(openssl rand -base64 32 | tr -dc 'A-Za-z' | head -c 16)"
 fi
 
 ADMIN_START_DB_INSTANCE="${ADMIN_START_DB_INSTANCE:-1}"
@@ -201,7 +201,7 @@ fi
 save_admin_password() {
   aws_with_auth ssm put-parameter \
     --region "${AWS_REGION}" \
-    --name "/corpershub/secret/${ENVIRONMENT}/DJANGO_ADMIN_PASSWORD" \
+    --name "/corpershub/secret/${ENVIRONMENT}/DJANGO_SUPERUSER_PASSWORD" \
     --value "${ADMIN_PASSWORD}" \
     --type "SecureString" \
     --overwrite
