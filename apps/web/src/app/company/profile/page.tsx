@@ -12,7 +12,6 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Badge } from "@/components/ui/badge";
@@ -214,12 +213,14 @@ const QUALIFICATION_OPTIONS = [
     options: group.degrees,
   })),
 ];
+
 const STATE_OF_OPERATION_OPTIONS = [
   {
     label: "States in Nigeria",
     options: NIGERIAN_STATES,
   },
 ];
+
 const DESIRED_UNIVERSITY_OPTIONS = [
   {
     label: "Preference",
@@ -230,6 +231,7 @@ const DESIRED_UNIVERSITY_OPTIONS = [
     options: group.universities,
   })),
 ];
+
 const STAFF_COUNT_RANGE_OPTIONS = [
   "1-10",
   "11-50",
@@ -237,6 +239,7 @@ const STAFF_COUNT_RANGE_OPTIONS = [
   "200-1000",
   "Above 1000",
 ];
+
 const COMPANY_SECTOR_OPTIONS = [
   "Agriculture & Agribusiness",
   "Banking & Financial Services",
@@ -265,6 +268,7 @@ const COMPANY_SECTOR_OPTIONS = [
   "Telecommunications",
   "Transport & Aviation"
 ];
+
 const PLACEMENT_TYPE_OPTIONS = [
   "Full-time / On-Site",
   "Full-time / Remote",
@@ -273,6 +277,7 @@ const PLACEMENT_TYPE_OPTIONS = [
   "Part-Time / Remote",
   "Part-Time / Hybrid",
 ];
+
 const MONTHLY_ALLOWANCE_OPTIONS = [
   "None",
   "Below N25,000",
@@ -281,6 +286,7 @@ const MONTHLY_ALLOWANCE_OPTIONS = [
   "Above N100,000",
   "Negotiable",
 ];
+
 const ACCOMMODATION_OPTIONS = ["Yes", "No", "Willing to discuss"];
 const PPA_SUPPORT_OPTIONS = ["Yes", "No", "Willing to discuss"];
 const PLACEMENT_TYPE_OPTION_GROUPS = [
@@ -289,6 +295,7 @@ const PLACEMENT_TYPE_OPTION_GROUPS = [
     options: PLACEMENT_TYPE_OPTIONS,
   },
 ];
+
 const ORGANIZATION_TYPE_OPTIONS = [
   "Business Name (Sole Proprietorship)",
   "Company Limited by Guarantee (Ltd/Gte)",
@@ -299,6 +306,7 @@ const ORGANIZATION_TYPE_OPTIONS = [
   "Public Company Limited by Shares (PLC)",
   "Unlimited Company (Ultd)",
 ];
+
 const CUSTOM_ORGANIZATION_TYPE_OPTION = "Others";
 
 const FORM_DRAFT_STORAGE_KEY = "company_profile_draft";

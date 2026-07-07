@@ -163,7 +163,7 @@ class CompanyProfileAPITests(APITestCase):
         self.company.refresh_from_db()
         self.assertTrue(self.company.profile_fields_complete)
         self.assertFalse(self.company.is_complete)
-        self.assertEqual(self.company.company_registration_number, "RC12345")
+        self.assertEqual(self.company.company_registration_number, "RC1029384")
         self.assertEqual(
             self.company.verification_status,
             CompanyProfile.VerificationStatus.UNSUBMITTED,
