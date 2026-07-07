@@ -31,12 +31,6 @@ def resolve_company_approval_status(profile: CompanyProfile) -> str:
         and profile.terms_accepted
     ):
         return CompanyProfile.ApprovalStatus.APPROVED
-    if (
-        profile.verification_status == CompanyProfile.VerificationStatus.PENDING
-        and profile.profile_fields_complete
-        and profile.terms_accepted
-    ):
-        return CompanyProfile.ApprovalStatus.PENDING
     if profile.verification_status == CompanyProfile.VerificationStatus.REJECTED:
         return CompanyProfile.ApprovalStatus.REJECTED
     return profile.approval_status

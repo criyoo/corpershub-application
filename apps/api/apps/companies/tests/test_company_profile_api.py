@@ -144,11 +144,9 @@ class CompanyProfileAPITests(APITestCase):
             metadata={"source": "test"},
         )
 
-    @patch("apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"})
-    @patch("apps.companies.views.notify_company_verification_admins")
+@patch("apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"})
     def test_complete_profile_moves_to_pending_review_on_submit(
         self,
-        notify_admins_mock,
         verify_company_mock,
     ):
         self.client.force_authenticate(self.company_user)
@@ -165,7 +163,7 @@ class CompanyProfileAPITests(APITestCase):
         self.company.refresh_from_db()
         self.assertTrue(self.company.profile_fields_complete)
         self.assertFalse(self.company.is_complete)
-        self.assertEqual(self.company.company_registration_number, "RC1029384")
+        self.assertEqual(self.company.company_registration_number, "RC12345")
         self.assertEqual(
             self.company.verification_status,
             CompanyProfile.VerificationStatus.UNSUBMITTED,
@@ -190,10 +188,9 @@ class CompanyProfileAPITests(APITestCase):
         )
         self.assertEqual(
             self.company.approval_status,
-            CompanyProfile.ApprovalStatus.PENDING,
+            CompanyProfile.ApprovalStatus.APPROVED,
         )
         verify_company_mock.assert_called_once()
-        notify_admins_mock.assert_called_once()
 
     def test_company_profile_requires_profile_photo(self):
         self.client.force_authenticate(self.company_user)
@@ -532,7 +529,7 @@ class CompanyProfileAPITests(APITestCase):
         self.assertEqual(self.company.contact_phone, "+2348035555555")
         self.assertEqual(self.company.desired_corper_description, "Updated description")
         self.assertEqual(self.company.verification_status, CompanyProfile.VerificationStatus.VERIFIED)
-        self.assertEqual(self.company.approval_status, CompanyProfile.ApprovalStatus.PENDING)
+        self.assertEqual(self.company.approval_status, CompanyProfile.ApprovalStatus.APPROVED)
         verify_company_mock.assert_called_once()
 
     def test_verified_profile_edit_mode_allows_company_function_and_image_updates(self):

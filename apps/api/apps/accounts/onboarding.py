@@ -28,21 +28,11 @@ def corper_ready_for_approval(corper: CorperProfile) -> bool:
 
 
 def sync_company_approval_status(company: CompanyProfile) -> None:
-    if company_ready_for_approval(company):
-        target_status = (
-            CompanyProfile.ApprovalStatus.PENDING
-            if company.approval_status
-            in {
-                CompanyProfile.ApprovalStatus.UNSUBMITTED,
-                CompanyProfile.ApprovalStatus.REJECTED,
-            }
-            else company.approval_status
-        )
-    else:
-        target_status = CompanyProfile.ApprovalStatus.UNSUBMITTED
-
-    if target_status != company.approval_status:
-        company.approval_status = target_status
+    if company_ready_for_approval(company) and company.approval_status != CompanyProfile.ApprovalStatus.APPROVED:
+        company.approval_status = CompanyProfile.ApprovalStatus.APPROVED
+        company.save(update_fields=["approval_status", "updated_at"])
+    elif not company_ready_for_approval(company) and company.approval_status != CompanyProfile.ApprovalStatus.UNSUBMITTED:
+        company.approval_status = CompanyProfile.ApprovalStatus.UNSUBMITTED
         company.save(update_fields=["approval_status", "updated_at"])
 
 

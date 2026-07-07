@@ -14,7 +14,7 @@ from apps.companies.serializers import (
     CompanyVerificationSerializer,
 )
 from apps.search.services import apply_company_recommendations
-from apps.companies.services import ensure_company_profile, notify_company_verification_admins
+from apps.companies.services import ensure_company_profile
 from apps.companies.verification import verify_company_profile_or_raise
 from apps.common.permissions import IsAdminUserRole, IsCompanyUser, IsCorperUser
 from apps.subscriptions.services import enforce_browse_access
@@ -56,10 +56,13 @@ def _sync_company_approval_status(company: CompanyProfile):
     sync_company_approval_status(company)
     company.refresh_from_db()
     if (
-        previous_approval_status != CompanyProfile.ApprovalStatus.PENDING
-        and company.approval_status == CompanyProfile.ApprovalStatus.PENDING
+        previous_approval_status != CompanyProfile.ApprovalStatus.APPROVED
+        and company.approval_status == CompanyProfile.ApprovalStatus.APPROVED
     ):
-        notify_company_verification_admins(company=company)
+        from apps.accounts.onboarding import maybe_send_company_approval_welcome_email
+        maybe_send_company_approval_welcome_email(
+            company, previous_status=previous_approval_status
+        )
 
 
 class CompanyVerificationAPIView(generics.RetrieveUpdateAPIView):

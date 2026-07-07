@@ -25,7 +25,32 @@ env:
   NODE_VERSION: "24.0"
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            web:
+              - "apps/web/**"
+              - "packages/**"
+              - "package.json"
+              - "package-lock.json"
+              - "turbo.json"
+            api:
+              - "apps/api/**"
+              - "requirements.txt"
+
   lint-web:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -52,7 +77,10 @@ jobs:
         run: npm run typecheck --workspace apps/web
 
   test-web:
-    needs: lint-web
+    needs:
+      - detect-changes
+      - lint-web
+    if: needs.detect-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -76,7 +104,10 @@ jobs:
         run: npm run test --workspace apps/web
 
   build-web:
-    needs: test-web
+    needs:
+      - detect-changes
+      - test-web
+    if: needs.detect-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -114,7 +145,10 @@ jobs:
           include-hidden-files: true
 
   deploy-web:
-    needs: build-web
+    needs:
+      - detect-changes
+      - build-web
+    if: needs.detect-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: production
@@ -136,6 +170,8 @@ jobs:
         run: bash scripts/deploy/web.sh prod
 
   lint-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -168,9 +204,11 @@ jobs:
           ruff format .
           ruff check .
 
-
   test-api:
-    needs: lint-api
+    needs:
+      - detect-changes
+      - lint-api
+    if: needs.detect-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -196,9 +234,11 @@ jobs:
           cd apps/api
           python manage.py test --settings=config.settings.test
 
-
   deploy-api:
-    needs: test-api
+    needs:
+      - detect-changes
+      - test-api
+    if: needs.detect-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production
@@ -219,5 +259,3 @@ jobs:
 
       - name: Deploy API
         run: bash scripts/deploy/api.sh prod
-
-
