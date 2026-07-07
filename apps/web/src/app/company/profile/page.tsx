@@ -1665,7 +1665,7 @@ function CompanyProfilePageContent() {
           {!isEditMode ? (
             <Card className="mt-6 grid gap-6 bg-white/[0.01]">
               <h2 className="font-display text-xl text-white">
-                Director's information
+                Director&apos;s information
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className={GENERAL_LABEL}>
