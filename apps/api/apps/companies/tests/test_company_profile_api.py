@@ -144,7 +144,7 @@ class CompanyProfileAPITests(APITestCase):
             metadata={"source": "test"},
         )
 
-@patch("apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"})
+    @patch("apps.companies.views.verify_company_profile_or_raise", return_value={"companyName": "Prime Logistics"})
     def test_complete_profile_moves_to_pending_review_on_submit(
         self,
         verify_company_mock,
