@@ -41,7 +41,6 @@ class SeedDemoDataCommandTests(TestCase):
                     "number_of_staff": "Above 1000",
                     "ppa_capacity": "3",
                     "number_of_office_location": "5",
-                    "company_function": "Mobile and Broadband Services",
                     "placement_type": "Part-Time/On-Site",
                     "monthly_allowance_offered": "N50,000-N100,000",
                     "ppa_support": "Yes",
@@ -219,7 +218,6 @@ class SeedDemoDataCommandTests(TestCase):
                         "number_of_staff": "201-500",
                         "ppa_capacity": "6",
                         "number_of_office_location": "2",
-                        "company_function": "Enterprise Services",
                         "placement_type": "Full-Time/Hybrid",
                         "monthly_allowance_offered": "Negotiable",
                         "ppa_support": "Willing to discuss",
@@ -306,7 +304,6 @@ class SeedDemoDataCommandTests(TestCase):
         company = company_user.company_profile
         self.assertEqual(company.company_name, "Airtel Nigeria Updated")
         self.assertEqual(company.company_location_city, "Wuse")
-        self.assertEqual(company.company_function, "Enterprise Services")
         self.assertEqual(company.company_address, "44 Airtel Crescent")
         self.assertEqual(company.preferred_deployment_states, "Abuja, Kaduna")
         self.assertEqual(company.contact_name, "Kelechi Musa")

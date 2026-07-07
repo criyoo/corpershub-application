@@ -64,7 +64,6 @@ class CompanyProfileAPITests(APITestCase):
             "staff_count_range": "51-200",
             "ppa_capacity": "12",
             "office_location_count": "3",
-            "company_function": "Operations",
             "placement_type": "Full-time / On-Site",
             "monthly_allowance_offered": "N25,000-N50,000",
             "accommodation_provided": "To be discussed",
@@ -107,7 +106,6 @@ class CompanyProfileAPITests(APITestCase):
         self.company.staff_count_range = "51-200"
         self.company.ppa_capacity = 12
         self.company.office_location_count = 3
-        self.company.company_function = "Operations"
         self.company.placement_type = "Full-time / On-Site"
         self.company.monthly_allowance_offered = "N25,000-N50,000"
         self.company.accommodation_provided = "To be discussed"
@@ -436,7 +434,6 @@ class CompanyProfileAPITests(APITestCase):
                 "company_location_city",
                 "company_address",
                 "company_sector",
-                "company_function",
                 "verification_status",
                 "approval_status",
                 "desired_corper_description",
@@ -491,7 +488,6 @@ class CompanyProfileAPITests(APITestCase):
                 "company_sector",
                 "company_location_city",
                 "company_address",
-                "company_function",
                 "desired_qualification",
                 "desired_age_range",
                 "desired_field_of_study",
@@ -532,10 +528,9 @@ class CompanyProfileAPITests(APITestCase):
         self.assertEqual(self.company.approval_status, CompanyProfile.ApprovalStatus.APPROVED)
         verify_company_mock.assert_called_once()
 
-    def test_verified_profile_edit_mode_allows_company_function_and_image_updates(self):
+    def test_verified_profile_edit_mode_allows_and_image_updates(self):
         self.make_company_profile_complete()
         self.company.verification_status = CompanyProfile.VerificationStatus.VERIFIED
-        self.company.company_function = "Operations"
         self.company.save(
             update_fields=[
                 "company_name",
@@ -544,7 +539,6 @@ class CompanyProfileAPITests(APITestCase):
                 "company_location_city",
                 "company_address",
                 "company_sector",
-                "company_function",
                 "desired_corper_description",
                 "desired_qualification",
                 "desired_age_range",
@@ -563,7 +557,6 @@ class CompanyProfileAPITests(APITestCase):
         response = self.client.patch(
             "/api/companies/me/?edit=1",
             {
-                "company_function": "Business Operations",
                 "company_image": self.company_image_file(),
             },
             format="multipart",
@@ -571,7 +564,6 @@ class CompanyProfileAPITests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.company.refresh_from_db()
-        self.assertEqual(self.company.company_function, "Business Operations")
         self.assertTrue(bool(self.company.company_image))
         self.assertEqual(self.company.verification_status, CompanyProfile.VerificationStatus.VERIFIED)
 
@@ -651,7 +643,6 @@ class CompanyProfileAPITests(APITestCase):
         payload["company_registration_date"] = ""
         payload["company_website"] = ""
         payload["office_location_count"] = ""
-        payload["company_function"] = ""
         payload["monthly_allowance_offered"] = ""
 
         response = self.client.patch(
@@ -665,7 +656,6 @@ class CompanyProfileAPITests(APITestCase):
         self.assertIsNone(self.company.company_registration_date)
         self.assertEqual(self.company.company_website, "")
         self.assertIsNone(self.company.office_location_count)
-        self.assertEqual(self.company.company_function, "")
         self.assertEqual(self.company.monthly_allowance_offered, "")
         self.assertTrue(self.company.profile_fields_complete)
 

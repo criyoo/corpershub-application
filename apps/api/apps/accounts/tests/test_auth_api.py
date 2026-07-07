@@ -770,7 +770,6 @@ class AuthAPITests(APITestCase):
         company.company_location_city = "Ikeja"
         company.company_address = "12 Allen Avenue"
         company.company_sector = "Operations"
-        company.company_function = "Logistics"
         company.ppa_capacity = 12
         company.desired_corper_description = "Looking for operations corpers."
         company.desired_qualification = "B.Sc"
@@ -832,7 +831,6 @@ class AuthAPITests(APITestCase):
         company.company_location_city = "Yaba"
         company.company_address = "8 Herbert Macaulay"
         company.company_sector = "Technology"
-        company.company_function = "Operations"
         company.ppa_capacity = 12
         company.desired_corper_description = "Looking for verified corpers."
         company.desired_qualification = "B.Sc"

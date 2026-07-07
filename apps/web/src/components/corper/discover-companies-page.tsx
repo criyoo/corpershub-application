@@ -507,9 +507,6 @@ export function DiscoverCompaniesPage({
                   </div>
 
                   <div className="flex min-h-0 flex-1 flex-col justify-end p-3">
-                    <p className="truncate text-[12px] font-semibold uppercase tracking-[0.10em] text-white/100 text-lime">
-                      {company.company_function || "Function not specified"}
-                    </p>
                     <CompanySummaryLine summary={companySummary} />
                     <div className="mt-2 flex min-w-0 items-center gap-2 text-[12px] text-mist">
                       <LocationIcon className="h-5 w-5 shrink-0 text-lime" />

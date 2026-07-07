@@ -38,7 +38,6 @@ class CompanyProfile(UUIDPrimaryKeyModel):
     staff_count_range = models.CharField(max_length=64, blank=True, default="")
     ppa_capacity = models.PositiveIntegerField(null=True, blank=True)
     office_location_count = models.PositiveIntegerField(null=True, blank=True)
-    company_function = models.CharField(max_length=120, blank=True, default="")
     placement_type = models.CharField(max_length=255, blank=True, default="")
     monthly_allowance_offered = models.CharField(max_length=64, blank=True, default="")
     accommodation_provided = models.CharField(max_length=32, blank=True, default="")
@@ -77,7 +76,7 @@ class CompanyProfile(UUIDPrimaryKeyModel):
                 name="company_profile_location_idx",
             ),
             models.Index(
-                fields=["company_sector", "company_function"],
+                fields=["company_sector"],
                 name="company_profile_sector_fn_idx",
             ),
         ]

@@ -114,7 +114,6 @@ class MyCompanyProfileAPIView(generics.RetrieveUpdateAPIView):
         "desired_posting_states",
         "desired_skills",
         "desired_experience",
-        "company_function",
         "company_image",
     }
 
@@ -179,7 +178,6 @@ class CompanyAdminListAPIView(generics.ListAPIView):
     search_fields = [
         "company_name",
         "company_sector",
-        "company_function",
         "desired_field_of_study",
         "desired_university",
         "desired_posting_states",

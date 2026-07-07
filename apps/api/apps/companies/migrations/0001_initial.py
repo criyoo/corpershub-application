@@ -34,7 +34,6 @@ class Migration(migrations.Migration):
                 ("staff_count_range", models.CharField(blank=True, default="", max_length=64)),
                 ("ppa_capacity", models.PositiveIntegerField(blank=True, null=True)),
                 ("office_location_count", models.PositiveIntegerField(blank=True, null=True)),
-                ("company_function", models.CharField(max_length=120)),
                 ("placement_type", models.CharField(blank=True, default="", max_length=64)),
                 ("monthly_allowance_offered", models.CharField(blank=True, default="", max_length=64)),
                 ("ppa_support", models.CharField(blank=True, default="", max_length=64)),
@@ -86,7 +85,7 @@ class Migration(migrations.Migration):
                         name="company_profile_location_idx",
                     ),
                     models.Index(
-                        fields=["company_sector", "company_function"],
+                        fields=["company_sector"],
                         name="company_profile_sector_fn_idx",
                     ),
                 ],

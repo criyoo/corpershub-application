@@ -33,7 +33,6 @@ class InterestFlowTests(APITestCase):
         self.company.company_location_state = "Lagos"
         self.company.company_location_city = "Yaba"
         self.company.company_sector = "Tech"
-        self.company.company_function = "Support"
         self.company.desired_corper_description = "Looking for NYSC support talent."
         self.company.save()
 

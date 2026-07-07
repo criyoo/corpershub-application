@@ -37,7 +37,6 @@ def ensure_company_profile(
             "staff_count_range": "",
             "ppa_capacity": None,
             "office_location_count": None,
-            "company_function": "",
             "placement_type": "",
             "monthly_allowance_offered": "",
             "accommodation_provided": "",

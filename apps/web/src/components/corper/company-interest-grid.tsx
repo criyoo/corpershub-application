@@ -78,7 +78,7 @@ export function CompanyInterestGrid({
         const company = interest.company;
         const imageUrl = resolveMediaUrl(company.company_image);
         const activityDate = formatInterestDate(interest.company_expressed_at ?? interest.corper_expressed_at);
-        const companyMeta = [company.company_sector, company.company_function]
+        const companyMeta = [company.company_sector]
           .map((value) => value.trim())
           .filter(Boolean)
           .join(" · ");
@@ -115,9 +115,6 @@ export function CompanyInterestGrid({
                   </div>
                   <div className="min-w-0">
                     <h2 className="truncate font-display text-2xl text-white">{company.company_name}</h2>
-                    <p className="truncate text-sm text-white/78">
-                      {company.company_function || "Function not specified"}
-                    </p>
                   </div>
                 </div>
               </div>

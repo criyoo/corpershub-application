@@ -35,7 +35,6 @@ type CompanyAdminDetail = {
   company_sector: string;
   organization_type: string;
   staff_count_range: string;
-  company_function: string;
   placement_type: string;
   monthly_allowance_offered: string;
   accommodation_provided: string;
@@ -172,7 +171,6 @@ function AdminCompanyDetailPageContent() {
             <DetailItem label="Registration date" value={company.data.company_registration_date} />
             <DetailItem label="Tax identification number" value={company.data.tax_identification_number} />
             <DetailItem label="Sector" value={company.data.company_sector} />
-            <DetailItem label="Function" value={company.data.company_function} />
             <DetailItem label="Organisation type" value={company.data.organization_type} />
             <DetailItem label="Number of staff" value={company.data.staff_count_range} />
             <DetailItem label="Website" value={company.data.company_website} />

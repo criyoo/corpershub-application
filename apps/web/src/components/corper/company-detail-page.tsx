@@ -204,7 +204,7 @@ export function CompanyDetailPage({
     : "";
   const recommendationReason = company.data.match_reasons[0] ?? "";
   const chatDisabledByPlan = !subscriptionsLoaded || !corperHasPaidAccess;
-  const companyMeta = [company.data.company_sector, company.data.company_function]
+  const companyMeta = [company.data.company_sector]
     .map((value) => value.trim())
     .filter(Boolean)
     .join(" · ");

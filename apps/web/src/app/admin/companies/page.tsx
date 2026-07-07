@@ -21,7 +21,6 @@ type Company = {
   id: string;
   company_name: string;
   company_sector: string;
-  company_function: string;
   email: string;
   verification_status: string;
   approval_status: string;
@@ -84,7 +83,6 @@ export default function AdminCompaniesPage() {
           sortedCompanies.map((company) => [
             company.company_name,
             company.company_sector,
-            company.company_function,
             <Link
               key={`${company.id}-email`}
               href={`/admin/companies/detail?companyId=${company.id}`}

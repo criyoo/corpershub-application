@@ -73,7 +73,6 @@ class CompanySearchAPIView(generics.ListAPIView):
     search_fields = [
         "company_name",
         "company_sector",
-        "company_function",
         "desired_field_of_study",
         "desired_corper_description",
     ]

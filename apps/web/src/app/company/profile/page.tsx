@@ -65,7 +65,6 @@ type CompanyProfile = {
   staff_count_range: string;
   ppa_capacity: number | null;
   office_location_count: number | null;
-  company_function: string;
   placement_type: string;
   monthly_allowance_offered: string;
   accommodation_provided: string;
@@ -108,7 +107,6 @@ type CompanyProfileFormValues = {
   staff_count_range: string;
   ppa_capacity: string;
   office_location_count: string;
-  company_function: string;
   placement_type: string[];
   monthly_allowance_offered: string;
   accommodation_provided: string;
@@ -144,7 +142,6 @@ type CompanyProfilePayload = {
   staff_count_range: string;
   ppa_capacity: string;
   office_location_count: string;
-  company_function: string;
   placement_type: string;
   monthly_allowance_offered: string;
   accommodation_provided: string;
@@ -181,7 +178,6 @@ const EMPTY_FORM_VALUES: CompanyProfileFormValues = {
   staff_count_range: "",
   ppa_capacity: "",
   office_location_count: "",
-  company_function: "",
   placement_type: [],
   monthly_allowance_offered: "",
   accommodation_provided: "",
@@ -448,7 +444,6 @@ function mapProfileToForm(profile: CompanyProfile): CompanyProfileFormValues {
     office_location_count: profile.office_location_count
       ? String(profile.office_location_count)
       : "",
-    company_function: profile.company_function ?? "",
     placement_type: parseCommaSeparatedValues(profile.placement_type),
     monthly_allowance_offered: profile.monthly_allowance_offered ?? "",
     accommodation_provided: profile.accommodation_provided ?? "",
@@ -502,7 +497,6 @@ function buildProfilePayload(formValues: CompanyProfileFormValues): CompanyProfi
     staff_count_range: formValues.staff_count_range.trim(),
     ppa_capacity: formValues.ppa_capacity.trim(),
     office_location_count: formValues.office_location_count.trim(),
-    company_function: formValues.company_function.trim(),
     placement_type: serializeMultiSelectValues(formValues.placement_type),
     monthly_allowance_offered: formValues.monthly_allowance_offered.trim(),
     accommodation_provided: formValues.accommodation_provided.trim(),
@@ -652,7 +646,6 @@ function clearFormValuesFromStorage() {
   }
 }
 
-
 function CompanyProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -703,6 +696,22 @@ function CompanyProfilePageContent() {
         shouldSyncListValues(
           mappedProfileValues.preferred_deployment_states,
           mappedProfileValues.desired_posting_states
+        )
+      );
+    } else {
+      setIsCompanyAddressSameAsHeadOffice(
+        shouldSyncTextValues(stored.head_office_address, stored.company_address)
+      );
+      setIsContactNameSameAsDirector(
+        shouldSyncTextValues(stored.directors_name, stored.contact_name)
+      );
+      setIsContactPhoneSameAsDirector(
+        shouldSyncTextValues(stored.director_phone_number, stored.contact_phone)
+      );
+      setIsDesiredPostingStateSameAsPreferred(
+        shouldSyncListValues(
+          stored.preferred_deployment_states,
+          stored.desired_posting_states
         )
       );
     }
@@ -1106,7 +1115,7 @@ function CompanyProfilePageContent() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+              <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Company name", true)}</span>
                 <Input
                   name="company_name"
@@ -1119,6 +1128,18 @@ function CompanyProfilePageContent() {
                 />
               </label>
 
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Company Registration Date")}</span>
+                <Input
+                  name="company_registration_date"
+                  type="date"
+                  value={formValues.company_registration_date}
+                  onChange={handleFieldChange}
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
+              
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Company Registration Number", true)}</span>
                 <Input
@@ -1137,17 +1158,7 @@ function CompanyProfilePageContent() {
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Company Registration Date")}</span>
-                <Input
-                  name="company_registration_date"
-                  type="date"
-                  value={formValues.company_registration_date}
-                  onChange={handleFieldChange}
-                  disabled={!canEditProfile}
-                  className={PLACEHOLDER_CLASS_NAME}
-                />
-              </label>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Tax Identification Number", true)}</span>
                 <Input
@@ -1180,6 +1191,7 @@ function CompanyProfilePageContent() {
                   disabled={!canEditProfile}
                 />
               </div>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("City", true)}</span>
                 <Input
@@ -1214,6 +1226,7 @@ function CompanyProfilePageContent() {
                   ))}
                 </Select>
               </label>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Organisation type", true)}</span>
                 <Select
@@ -1234,30 +1247,21 @@ function CompanyProfilePageContent() {
                   ))}
                 </Select>
               </label>
-              {formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION ? (
-                <label className={GENERAL_LABEL}>
-                  <span>{fieldLabel("Organisation type details", true)}</span>
-                  <Input
-                    name="organization_type_other"
-                    placeholder="Enter organisation type"
-                    value={formValues.organization_type_other}
-                    onChange={handleFieldChange}
-                    disabled={!canEditProfile}
-                    className={PLACEHOLDER_CLASS_NAME}
-                  />
-                </label>
-              ) : null}
+
               <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Company Function")}</span>
+                <span>{fieldLabel("Number of office locations", true)}</span>
                 <Input
-                  name="company_function"
-                  placeholder="Company functions"
-                  value={formValues.company_function}
+                  name="office_location_count"
+                  type="number"
+                  min="1"
+                  placeholder="Enter number of cities where you have offices"
+                  value={formValues.office_location_count}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Number of staff", true)}</span>
                 <Select
@@ -1278,6 +1282,66 @@ function CompanyProfilePageContent() {
                   ))}
                 </Select>
               </label>
+
+              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                <span>{fieldLabel("Company Summary", true)}</span>
+                <Textarea
+                  name="desired_corper_description"
+                  placeholder="Describe your company and what you do"
+                  value={formValues.desired_corper_description}
+                  onChange={handleFieldChange}
+                  required
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
+            </div>
+          </Card>
+
+          <div className="mb-3" />
+
+          <Card className="grid gap-6 bg-white/[0.01]">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-display text-xl text-white">PPA Information</h2>
+              <div className="flex flex-wrap gap-2">
+                <Badge tone={verificationStatusTone}>{verificationStatusLabel}</Badge>
+              </div>
+            </div>
+
+           <div className="grid gap-4 md:grid-cols-2">
+              <div className={GENERAL_DIV}>
+                <span>{fieldLabel("Placement Type", true)}</span>
+                <MultiSelectDropdown
+                  placeholder="Select one or more placement types"
+                  values={formValues.placement_type}
+                  groups={PLACEMENT_TYPE_OPTION_GROUPS}
+                  summaryClassName={dropdownSummaryClassName(formValues.placement_type)}
+                  onChange={(values) => updateFormValue("placement_type", values)}
+                  disabled={!canEditProfile}
+                />
+              </div>
+
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Accommodation provided?", true)}</span>
+                <Select
+                  name="accommodation_provided"
+                  value={formValues.accommodation_provided}
+                  onChange={handleFieldChange}
+                  disabled={!canEditProfile}
+                  className={selectClassName(formValues.accommodation_provided)}
+                  style={selectPlaceholderStyle(formValues.accommodation_provided)}
+                >
+                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
+                    Select an option
+                  </option>
+                  {ACCOMMODATION_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("PPA Capacity", true)}</span>
                 <Input
@@ -1292,31 +1356,43 @@ function CompanyProfilePageContent() {
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
+
               <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Number of office locations", true)}</span>
-                <Input
-                  name="office_location_count"
-                  type="number"
-                  min="1"
-                  placeholder="Enter number of cities where you have offices"
-                  value={formValues.office_location_count}
+                <span>{fieldLabel("PPA support")}</span>
+                <Select
+                  name="ppa_support"
+                  value={formValues.ppa_support}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
-                  className={PLACEHOLDER_CLASS_NAME}
-                />
+                  className={selectClassName(formValues.ppa_support)}
+                  style={selectPlaceholderStyle(formValues.ppa_support)}
+                >
+                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
+                    Can you support PPA process with NYSC?
+                  </option>
+                  {PPA_SUPPORT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </Select>
               </label>
 
               <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Placement Type", true)}</span>
+                <span>{fieldLabel("Preferred states for PPA Placement", true)}</span>
                 <MultiSelectDropdown
-                  placeholder="Select one or more placement types"
-                  values={formValues.placement_type}
-                  groups={PLACEMENT_TYPE_OPTION_GROUPS}
-                  summaryClassName={dropdownSummaryClassName(formValues.placement_type)}
-                  onChange={(values) => updateFormValue("placement_type", values)}
+                  placeholder="Select states where you can accept corp members"
+                  values={formValues.preferred_deployment_states}
+                  groups={STATE_OF_OPERATION_OPTIONS}
+                  searchable
+                  searchPlaceholder="Type to filter states"
+                  summaryClassName={dropdownSummaryClassName(formValues.preferred_deployment_states)}
+                  emptyStateText="No state matches your search."
+                  onChange={handlePreferredDeploymentStatesChange}
                   disabled={!canEditProfile}
                 />
               </div>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Monthly allowance offered", true)}</span>
                 <Select
@@ -1337,84 +1413,17 @@ function CompanyProfilePageContent() {
                   ))}
                 </Select>
               </label>
-              <div className="grid gap-4 md:col-span-2 md:grid-cols-3">
-                <label className={GENERAL_LABEL}>
-                  <span>{fieldLabel("Accommodation provided?", true)}</span>
-                  <Select
-                    name="accommodation_provided"
-                    value={formValues.accommodation_provided}
-                    onChange={handleFieldChange}
-                    disabled={!canEditProfile}
-                    className={selectClassName(formValues.accommodation_provided)}
-                    style={selectPlaceholderStyle(formValues.accommodation_provided)}
-                  >
-                    <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                      Select an option
-                    </option>
-                    {ACCOMMODATION_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </label>
-
-                <label className={GENERAL_LABEL}>
-                  <span>{fieldLabel("PPA support")}</span>
-                  <Select
-                    name="ppa_support"
-                    value={formValues.ppa_support}
-                    onChange={handleFieldChange}
-                    disabled={!canEditProfile}
-                    className={selectClassName(formValues.ppa_support)}
-                    style={selectPlaceholderStyle(formValues.ppa_support)}
-                  >
-                    <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                      Can you support PPA process with NYSC?
-                    </option>
-                    {PPA_SUPPORT_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </label>
-                <div className={GENERAL_DIV}>
-                  <span>{fieldLabel("Preferred states for PPA Placement", true)}</span>
-                  <MultiSelectDropdown
-                    placeholder="Select states where you can accept corp members"
-                    values={formValues.preferred_deployment_states}
-                    groups={STATE_OF_OPERATION_OPTIONS}
-                    searchable
-                    searchPlaceholder="Type to filter states"
-                    summaryClassName={dropdownSummaryClassName(formValues.preferred_deployment_states)}
-                    emptyStateText="No state matches your search."
-                    onChange={handlePreferredDeploymentStatesChange}
-                    disabled={!canEditProfile}
-                  />
-                </div>
-              </div>
-
-              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
-                <span>{fieldLabel("Company Summary", true)}</span>
-                <Textarea
-                  name="desired_corper_description"
-                  placeholder="Describe your company and what you do"
-                  value={formValues.desired_corper_description}
-                  onChange={handleFieldChange}
-                  required
-                  disabled={!canEditProfile}
-                  className={PLACEHOLDER_CLASS_NAME}
-                />
-              </label>
-            </div>
+           </div>      
           </Card>
 
           <div className="mb-3" />
 
           <Card className="grid gap-6 bg-white/[0.01]">
-            <div className="border-b border-white/10 pb-6">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-display text-xl text-white">Contact Details</h2>
+              <div className="flex flex-wrap gap-2">
+                <Badge tone={verificationStatusTone}>{verificationStatusLabel}</Badge>
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -1562,8 +1571,11 @@ function CompanyProfilePageContent() {
           <div className="mb-3" />
 
           <Card className="grid gap-6 bg-white/[0.01]">
-            <div className="border-b border-white/10 pb-6">
+            <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-display text-xl text-white">Preferences</h2>
+              <div className="flex flex-wrap gap-2">
+                <Badge tone={verificationStatusTone}>{verificationStatusLabel}</Badge>
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -1610,6 +1622,7 @@ function CompanyProfilePageContent() {
                   disabled={!canEditProfile}
                 />
               </label>
+
               <div className={GENERAL_DIV}>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span>{fieldLabel("Desired posting state", true)}</span>
@@ -1676,7 +1689,9 @@ function CompanyProfilePageContent() {
               </label>
             </div>
           </Card>
+
           <div className="mb-3" />
+
           <div className="flex items-center justify-end">
             <Button type="submit" disabled={isSaving || !canEditProfile}>
               {isSaving

@@ -15,11 +15,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name="companyprofile",
-            name="company_function",
-            field=models.CharField(blank=True, default="", max_length=120),
-        ),
-        migrations.AlterField(
-            model_name="companyprofile",
             name="placement_type",
             field=models.CharField(blank=True, default="", max_length=255),
         ),

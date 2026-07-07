@@ -6,7 +6,6 @@ export type CompanyDirectorySummary = {
   company_image: string | null;
   location: string;
   company_sector: string;
-  company_function: string;
   summary_description: string;
   match_score: number | null;
   match_reasons: string[];

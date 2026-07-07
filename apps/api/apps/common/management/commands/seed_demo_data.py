@@ -141,7 +141,6 @@ class Command(BaseCommand):
         company.staff_count_range = self.clean_text(profile_data.get("number_of_staff"))
         company.ppa_capacity = self.parse_int(profile_data.get("ppa_capacity"))
         company.office_location_count = self.parse_int(profile_data.get("number_of_office_location"))
-        company.company_function = self.clean_text(profile_data.get("company_function"))
         company.placement_type = self.clean_text(profile_data.get("placement_type"))
         company.monthly_allowance_offered = self.clean_text(profile_data.get("monthly_allowance_offered"))
         company.ppa_support = self.clean_text(profile_data.get("ppa_support"))

@@ -85,7 +85,6 @@ class CompanyVerificationFlowTests(APITestCase):
         self.company.company_location_city = "Yaba"
         self.company.company_address = "10 Herbert Macaulay Way"
         self.company.company_sector = "Logistics"
-        self.company.company_function = "Operations"
         self.company.ppa_capacity = 12
         self.company.office_location_count = 3
         self.company.desired_corper_description = "Need a corps member for company operations."

@@ -205,7 +205,6 @@ def filter_companies_for_directory(*, queryset: Any, params: Any) -> Any:
         "company_location_state": params.get("company_location_state") or params.get("state"),
         "company_location_city": params.get("company_location_city") or params.get("city"),
         "company_sector": params.get("company_sector") or params.get("sector"),
-        "company_function": params.get("company_function") or params.get("function"),
         "desired_field_of_study": params.get("desired_field_of_study"),
     }
     for field_name, value in text_filters.items():
@@ -859,7 +858,6 @@ def _company_text_query(term: str) -> Q:
         | Q(company_location_state__icontains=term)
         | Q(company_location_city__icontains=term)
         | Q(company_sector__icontains=term)
-        | Q(company_function__icontains=term)
         | Q(desired_field_of_study__icontains=term)
         | Q(desired_university__icontains=term)
         | Q(desired_posting_states__icontains=term)
