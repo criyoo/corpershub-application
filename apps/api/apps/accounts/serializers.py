@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 
 from apps.accounts.account_lifecycle import (
@@ -481,7 +482,29 @@ class CorpersTokenObtainPairSerializer(TokenObtainPairSerializer):
                             },
                         }
                     )
-        data = super().validate(attrs)
+            else:
+                raise serializers.ValidationError(
+                    {
+                        "detail": "No active account found with the given credentials, check the email address entered and try again.",
+                        "code": "invalid_email",
+                    }
+                )
+        try:
+            data = super().validate(attrs)
+        except AuthenticationFailed as exc:
+            if exc.code == "user_not_found" or exc.code == "user_inactive":
+                raise serializers.ValidationError(
+                    {
+                        "detail": "No active account found with the given credentials, check the email address entered and try again.",
+                        "code": "invalid_email",
+                    }
+                ) from exc
+            raise serializers.ValidationError(
+                {
+                    "detail": "An active account found but password entered is incorrect.",
+                    "code": "invalid_password",
+                }
+            ) from exc
         if not self.user.email_verified:
             raise serializers.ValidationError("Please verify your email before signing in.")
         data["user"] = CurrentUserSerializer(self.user).data

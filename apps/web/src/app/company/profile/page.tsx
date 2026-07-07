@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Badge } from "@/components/ui/badge";
@@ -213,14 +214,12 @@ const QUALIFICATION_OPTIONS = [
     options: group.degrees,
   })),
 ];
-
 const STATE_OF_OPERATION_OPTIONS = [
   {
     label: "States in Nigeria",
     options: NIGERIAN_STATES,
   },
 ];
-
 const DESIRED_UNIVERSITY_OPTIONS = [
   {
     label: "Preference",
@@ -231,7 +230,6 @@ const DESIRED_UNIVERSITY_OPTIONS = [
     options: group.universities,
   })),
 ];
-
 const STAFF_COUNT_RANGE_OPTIONS = [
   "1-10",
   "11-50",
@@ -239,7 +237,6 @@ const STAFF_COUNT_RANGE_OPTIONS = [
   "200-1000",
   "Above 1000",
 ];
-
 const COMPANY_SECTOR_OPTIONS = [
   "Agriculture & Agribusiness",
   "Banking & Financial Services",
@@ -268,7 +265,6 @@ const COMPANY_SECTOR_OPTIONS = [
   "Telecommunications",
   "Transport & Aviation"
 ];
-
 const PLACEMENT_TYPE_OPTIONS = [
   "Full-time / On-Site",
   "Full-time / Remote",
@@ -277,7 +273,6 @@ const PLACEMENT_TYPE_OPTIONS = [
   "Part-Time / Remote",
   "Part-Time / Hybrid",
 ];
-
 const MONTHLY_ALLOWANCE_OPTIONS = [
   "None",
   "Below N25,000",
@@ -286,7 +281,6 @@ const MONTHLY_ALLOWANCE_OPTIONS = [
   "Above N100,000",
   "Negotiable",
 ];
-
 const ACCOMMODATION_OPTIONS = ["Yes", "No", "Willing to discuss"];
 const PPA_SUPPORT_OPTIONS = ["Yes", "No", "Willing to discuss"];
 const PLACEMENT_TYPE_OPTION_GROUPS = [
@@ -295,7 +289,6 @@ const PLACEMENT_TYPE_OPTION_GROUPS = [
     options: PLACEMENT_TYPE_OPTIONS,
   },
 ];
-
 const ORGANIZATION_TYPE_OPTIONS = [
   "Business Name (Sole Proprietorship)",
   "Company Limited by Guarantee (Ltd/Gte)",
@@ -306,10 +299,8 @@ const ORGANIZATION_TYPE_OPTIONS = [
   "Public Company Limited by Shares (PLC)",
   "Unlimited Company (Ultd)",
 ];
-
 const CUSTOM_ORGANIZATION_TYPE_OPTION = "Others";
 
-const FORM_DRAFT_STORAGE_KEY = "company_profile_draft";
 
 const GENERAL_LABEL = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45";
 const GENERAL_DIV = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45";
@@ -614,32 +605,6 @@ function getMissingProfileFields(
   return missingFields;
 }
 
-function saveFormDraft(values: CompanyProfileFormValues): void {
-  try {
-    sessionStorage.setItem(FORM_DRAFT_STORAGE_KEY, JSON.stringify(values));
-  } catch {
-    // Storage full or unavailable — silently ignore
-  }
-}
-
-function loadFormDraft(): CompanyProfileFormValues | null {
-  try {
-    const raw = sessionStorage.getItem(FORM_DRAFT_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as CompanyProfileFormValues;
-  } catch {
-    return null;
-  }
-}
-
-function clearFormDraft(): void {
-  try {
-    sessionStorage.removeItem(FORM_DRAFT_STORAGE_KEY);
-  } catch {
-    // Silently ignore
-  }
-}
-
 export default function CompanyProfilePage() {
   return (
     <Suspense fallback={null}>
@@ -647,6 +612,46 @@ export default function CompanyProfilePage() {
     </Suspense>
   );
 }
+
+const COMPANY_PROFILE_FORM_STORAGE_KEY = "company_profile_form_values";
+
+function loadFormValuesFromStorage(): CompanyProfileFormValues | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const stored = window.sessionStorage.getItem(COMPANY_PROFILE_FORM_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as CompanyProfileFormValues;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return null;
+}
+
+function saveFormValuesToStorage(values: CompanyProfileFormValues) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(COMPANY_PROFILE_FORM_STORAGE_KEY, JSON.stringify(values));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearFormValuesFromStorage() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.sessionStorage.removeItem(COMPANY_PROFILE_FORM_STORAGE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}
+
 
 function CompanyProfilePageContent() {
   const router = useRouter();
@@ -656,7 +661,10 @@ function CompanyProfilePageContent() {
   const { data, refetch, loading } = useApiQuery<CompanyProfile>("/companies/me/", protectedQueryEnabled);
   const { data: courseCatalog } = useApiQuery<CourseCatalogResponse>("/common/course-catalog/");
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
-  const [formValues, setFormValues] = useState<CompanyProfileFormValues>(EMPTY_FORM_VALUES);
+  const [formValues, setFormValues] = useState<CompanyProfileFormValues>(() => {
+    const stored = loadFormValuesFromStorage();
+    return stored ?? EMPTY_FORM_VALUES;
+  });
   const [selectedCompanyImage, setSelectedCompanyImage] = useState<File | null>(null);
   const [companyImagePreviewUrl, setCompanyImagePreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -666,71 +674,42 @@ function CompanyProfilePageContent() {
   const [isDesiredPostingStateSameAsPreferred, setIsDesiredPostingStateSameAsPreferred] =
     useState(false);
   const companyImageInputRef = useRef<HTMLInputElement>(null);
-  const hasLoadedProfile = useRef(false);
 
   useEffect(() => {
     if (!data) {
       return;
     }
-
     const mappedProfileValues = mapProfileToForm(data);
-
-    // On first load, check for a saved draft. If one exists, restore it so
-    // the user's unsaved changes survive page refreshes and navigation.
-    if (!hasLoadedProfile.current) {
-      hasLoadedProfile.current = true;
-      const draft = loadFormDraft();
-      if (draft && !data.is_complete) {
-        setFormValues(draft);
-        setProfile(data);
-
-        // Restore sync-checkbox states based on draft values
-        setIsCompanyAddressSameAsHeadOffice(
-          shouldSyncTextValues(draft.head_office_address, draft.company_address)
-        );
-        setIsContactNameSameAsDirector(
-          shouldSyncTextValues(draft.directors_name, draft.contact_name)
-        );
-        setIsContactPhoneSameAsDirector(
-          shouldSyncTextValues(draft.director_phone_number, draft.contact_phone)
-        );
-        setIsDesiredPostingStateSameAsPreferred(
-          shouldSyncListValues(draft.preferred_deployment_states, draft.desired_posting_states)
-        );
-        return;
-      }
-    }
-
     setProfile(data);
-    setFormValues(mappedProfileValues);
-    setIsCompanyAddressSameAsHeadOffice(
-      shouldSyncTextValues(
-        mappedProfileValues.head_office_address,
-        mappedProfileValues.company_address
-      )
-    );
-    setIsContactNameSameAsDirector(
-      shouldSyncTextValues(mappedProfileValues.directors_name, mappedProfileValues.contact_name)
-    );
-    setIsContactPhoneSameAsDirector(
-      shouldSyncTextValues(
-        mappedProfileValues.director_phone_number,
-        mappedProfileValues.contact_phone
-      )
-    );
-    setIsDesiredPostingStateSameAsPreferred(
-      shouldSyncListValues(
-        mappedProfileValues.preferred_deployment_states,
-        mappedProfileValues.desired_posting_states
-      )
-    );
+    const stored = loadFormValuesFromStorage();
+    if (!stored) {
+      setFormValues(mappedProfileValues);
+      setIsCompanyAddressSameAsHeadOffice(
+        shouldSyncTextValues(
+          mappedProfileValues.head_office_address,
+          mappedProfileValues.company_address
+        )
+      );
+      setIsContactNameSameAsDirector(
+        shouldSyncTextValues(mappedProfileValues.directors_name, mappedProfileValues.contact_name)
+      );
+      setIsContactPhoneSameAsDirector(
+        shouldSyncTextValues(
+          mappedProfileValues.director_phone_number,
+          mappedProfileValues.contact_phone
+        )
+      );
+      setIsDesiredPostingStateSameAsPreferred(
+        shouldSyncListValues(
+          mappedProfileValues.preferred_deployment_states,
+          mappedProfileValues.desired_posting_states
+        )
+      );
+    }
   }, [data]);
 
-  // Persist form values to sessionStorage whenever they change,
-  // so unsaved edits survive page refresh / navigation away.
   useEffect(() => {
-    if (!hasLoadedProfile.current) return;
-    saveFormDraft(formValues);
+    saveFormValuesToStorage(formValues);
   }, [formValues]);
 
   useEffect(() => {
@@ -1006,9 +985,7 @@ function CompanyProfilePageContent() {
         body: formData,
       });
 
-      // Clear the persisted draft on successful save
-      clearFormDraft();
-
+      clearFormValuesFromStorage();
       setProfile(updatedProfile);
       const updatedFormValues = mapProfileToForm(updatedProfile);
       setFormValues(updatedFormValues);
@@ -1258,7 +1235,7 @@ function CompanyProfilePageContent() {
                 </Select>
               </label>
               {formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION ? (
-                <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                <label className={GENERAL_LABEL}>
                   <span>{fieldLabel("Organisation type details", true)}</span>
                   <Input
                     name="organization_type_other"
@@ -1270,7 +1247,6 @@ function CompanyProfilePageContent() {
                   />
                 </label>
               ) : null}
-
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Company Function")}</span>
                 <Input
@@ -1361,58 +1337,69 @@ function CompanyProfilePageContent() {
                   ))}
                 </Select>
               </label>
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Accommodation provided?", true)}</span>
-                <Select
-                  name="accommodation_provided"
-                  value={formValues.accommodation_provided}
-                  onChange={handleFieldChange}
-                  disabled={!canEditProfile}
-                  className={selectClassName(formValues.accommodation_provided)}
-                  style={selectPlaceholderStyle(formValues.accommodation_provided)}
-                >
-                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                    Select an option
-                  </option>
-                  {ACCOMMODATION_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+              <div className="grid gap-4 md:col-span-2 md:grid-cols-3">
+                <label className={GENERAL_LABEL}>
+                  <span>{fieldLabel("Accommodation provided?", true)}</span>
+                  <Select
+                    name="accommodation_provided"
+                    value={formValues.accommodation_provided}
+                    onChange={handleFieldChange}
+                    disabled={!canEditProfile}
+                    className={selectClassName(formValues.accommodation_provided)}
+                    style={selectPlaceholderStyle(formValues.accommodation_provided)}
+                  >
+                    <option value="" style={PLACEHOLDER_OPTION_STYLE}>
+                      Select an option
                     </option>
-                  ))}
-                </Select>
-              </label>
+                    {ACCOMMODATION_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
 
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("PPA support")}</span>
-                <Select
-                  name="ppa_support"
-                  value={formValues.ppa_support}
-                  onChange={handleFieldChange}
-                  disabled={!canEditProfile}
-                  className={selectClassName(formValues.ppa_support)}
-                  style={selectPlaceholderStyle(formValues.ppa_support)}
-                >
-                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                    Select an option
-                  </option>
-                  {PPA_SUPPORT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
+                <label className={GENERAL_LABEL}>
+                  <span>{fieldLabel("PPA support")}</span>
+                  <Select
+                    name="ppa_support"
+                    value={formValues.ppa_support}
+                    onChange={handleFieldChange}
+                    disabled={!canEditProfile}
+                    className={selectClassName(formValues.ppa_support)}
+                    style={selectPlaceholderStyle(formValues.ppa_support)}
+                  >
+                    <option value="" style={PLACEHOLDER_OPTION_STYLE}>
+                      Can you support PPA process with NYSC?
                     </option>
-                  ))}
-                </Select>
-              </label>
-            </div>
-          </Card>
+                    {PPA_SUPPORT_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                <div className={GENERAL_DIV}>
+                  <span>{fieldLabel("Preferred states for PPA Placement", true)}</span>
+                  <MultiSelectDropdown
+                    placeholder="Select states where you can accept corp members"
+                    values={formValues.preferred_deployment_states}
+                    groups={STATE_OF_OPERATION_OPTIONS}
+                    searchable
+                    searchPlaceholder="Type to filter states"
+                    summaryClassName={dropdownSummaryClassName(formValues.preferred_deployment_states)}
+                    emptyStateText="No state matches your search."
+                    onChange={handlePreferredDeploymentStatesChange}
+                    disabled={!canEditProfile}
+                  />
+                </div>
+              </div>
 
-          <Card className="mt-6 grid gap-6 bg-white/[0.01]">
-            <h2 className="font-display text-xl text-white">Corps members requirement</h2>
-            <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
-                <span>{fieldLabel("Company / Organisation Summary", true)}</span>
+                <span>{fieldLabel("Company Summary", true)}</span>
                 <Textarea
                   name="desired_corper_description"
-                  placeholder="Tell corps members about your organisation"
+                  placeholder="Describe your company and what you do"
                   value={formValues.desired_corper_description}
                   onChange={handleFieldChange}
                   required
@@ -1420,168 +1407,136 @@ function CompanyProfilePageContent() {
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
-
-              <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Desired qualification", true)}</span>
-                <MultiSelectDropdown
-                  placeholder="Select one or more qualifications"
-                  values={formValues.desired_qualification}
-                  groups={QUALIFICATION_OPTIONS}
-                  searchable
-                  searchPlaceholder="Type to filter degrees"
-                  summaryClassName={dropdownSummaryClassName(formValues.desired_qualification)}
-                  emptyStateText="No qualification matches your search."
-                  onChange={(values) => updateFormValue("desired_qualification", values)}
-                  disabled={!canEditProfile}
-                />
-              </div>
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Desired age range", true)}</span>
-                <Select
-                  name="desired_age_range"
-                  value={formValues.desired_age_range}
-                  onChange={handleFieldChange}
-                  required
-                  disabled={!canEditProfile}
-                  className={selectClassName(formValues.desired_age_range)}
-                  style={selectPlaceholderStyle(formValues.desired_age_range)}
-                >
-                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                    Select desired age range
-                  </option>
-                  <option value="18-24">18 - 24</option>
-                  <option value="24-28">24 - 28</option>
-                  <option value="28-30">28 - 30</option>
-                </Select>
-              </label>
-              <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Desired field of study", true)}</span>
-                <MultiSelectDropdown
-                  placeholder="Select one or more fields of study"
-                  values={formValues.desired_field_of_study}
-                  groups={fieldOfStudyOptions}
-                  searchable
-                  searchPlaceholder="Type to filter fields"
-                  summaryClassName={dropdownSummaryClassName(formValues.desired_field_of_study)}
-                  emptyStateText="No field matches your search."
-                  onChange={(values) => updateFormValue("desired_field_of_study", values)}
-                  disabled={!canEditProfile}
-                />
-              </div>
-              <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Desired university", true)}</span>
-                <MultiSelectDropdown
-                  placeholder="Select one or more universities"
-                  values={formValues.desired_university}
-                  groups={DESIRED_UNIVERSITY_OPTIONS}
-                  searchable
-                  searchPlaceholder="Type to filter universities"
-                  summaryClassName={dropdownSummaryClassName(formValues.desired_university)}
-                  emptyStateText="No university matches your search."
-                  onChange={(values) => updateFormValue("desired_university", values)}
-                  disabled={!canEditProfile}
-                />
-              </div>
-
-              <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Preferred deployment states", true)}</span>
-                <MultiSelectDropdown
-                  placeholder="Select one or more states"
-                  values={formValues.preferred_deployment_states}
-                  groups={STATE_OF_OPERATION_OPTIONS}
-                  searchable
-                  searchPlaceholder="Type to filter states"
-                  summaryClassName={dropdownSummaryClassName(formValues.preferred_deployment_states)}
-                  emptyStateText="No state matches your search."
-                  onChange={handlePreferredDeploymentStatesChange}
-                  disabled={!canEditProfile}
-                />
-              </div>
-
-              <div className={GENERAL_DIV}>
-                <span>{fieldLabel("Desired posting state", true)}</span>
-                <div className="grid gap-2 overflow-visible">
-                  <MultiSelectDropdown
-                    placeholder="Select one or more states"
-                    values={formValues.desired_posting_states}
-                    groups={STATE_OF_OPERATION_OPTIONS}
-                    searchable
-                    searchPlaceholder="Type to filter states"
-                    summaryClassName={dropdownSummaryClassName(formValues.desired_posting_states)}
-                    emptyStateText="No state matches your search."
-                    onChange={(values) => updateFormValue("desired_posting_states", values)}
-                    disabled={!canEditProfile}
-                  />
-                  <label className="flex items-center gap-2 text-xs text-mist">
-                    <input
-                      type="checkbox"
-                      checked={isDesiredPostingStateSameAsPreferred}
-                      onChange={handleDesiredPostingStateSyncChange}
-                      className={CHECKBOX_CLASS_NAME}
-                      disabled={!canEditProfile}
-                    />
-                    Same as preferred deployment states
-                  </label>
-                </div>
-              </div>
-
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Desired skills", true)}</span>
-                <Input
-                  name="desired_skills"
-                  placeholder="e.g. Programming, Marketing, Accounting"
-                  value={formValues.desired_skills}
-                  onChange={handleFieldChange}
-                  required
-                  disabled={!canEditProfile}
-                  className={PLACEHOLDER_CLASS_NAME}
-                />
-              </label>
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Desired experience", true)}</span>
-                <Select
-                  name="desired_experience"
-                  value={formValues.desired_experience}
-                  onChange={handleFieldChange}
-                  required
-                  disabled={!canEditProfile}
-                  className={selectClassName(formValues.desired_experience)}
-                  style={selectPlaceholderStyle(formValues.desired_experience)}
-                >
-                  <option value="" style={PLACEHOLDER_OPTION_STYLE}>
-                    Select desired experience
-                  </option>
-                  <option value="No Experience Required">No Experience Required</option>
-                  <option value="6 months - 1 year">6 months - 1 year</option>
-                  <option value="1 - 2 years">1 - 2 years</option>
-                  <option value="2 - 4 years">2 - 4 years</option>
-                  <option value="5+ years">5+ years</option>
-                </Select>
-              </label>
             </div>
           </Card>
 
-          <Card className="mt-6 grid gap-6 bg-white/[0.01]">
-            <h2 className="font-display text-xl text-white">Contact details</h2>
+          <div className="mb-3" />
+
+          <Card className="grid gap-6 bg-white/[0.01]">
+            <div className="border-b border-white/10 pb-6">
+              <h2 className="font-display text-xl text-white">Contact Details</h2>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Contact person fullname", true)}</span>
+              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                <span>{fieldLabel("Head office address", true)}</span>
                 <Input
-                  name="contact_name"
-                  placeholder="Contact full name"
-                  value={formValues.contact_name}
+                  name="head_office_address"
+                  placeholder="Head office address"
+                  value={formValues.head_office_address}
                   onChange={handleFieldChange}
-                  required
                   disabled={!canEditProfile}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
+
+              <div className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{fieldLabel("Company operating address", true)}</span>
+                  <label className="inline-flex items-center gap-2 text-xs text-lime">
+                    <input
+                      type="checkbox"
+                      checked={isCompanyAddressSameAsHeadOffice}
+                      onChange={handleCompanyAddressSyncChange}
+                      disabled={!canEditProfile}
+                      className={CHECKBOX_CLASS_NAME}
+                    />
+                    <span>Same as Head office address?</span>
+                  </label>
+                </div>
+                <Input
+                  name="company_address"
+                  placeholder="Company operating address"
+                  value={formValues.company_address}
+                  onChange={handleFieldChange}
+                  required
+                  disabled={!canEditProfile || isCompanyAddressSameAsHeadOffice}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </div>
+
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Director's fullname", true)}</span>
+                <Input
+                  name="directors_name"
+                  placeholder="Director's fullname"
+                  value={formValues.directors_name}
+                  onChange={handleFieldChange}
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Director's phone number", true)}</span>
+                <Input
+                  name="director_phone_number"
+                  placeholder="e.g. +2348012345678"
+                  value={formValues.director_phone_number}
+                  onChange={handleFieldChange}
+                  inputMode="tel"
+                  maxLength={14}
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
+
+              <div className={GENERAL_DIV}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{fieldLabel("Contact fullname", true)}</span>
+                  <label className="inline-flex items-center gap-2 text-xs text-lime">
+                    <input
+                      type="checkbox"
+                      checked={isContactNameSameAsDirector}
+                      onChange={handleContactNameSyncChange}
+                      disabled={!canEditProfile}
+                      className={CHECKBOX_CLASS_NAME}
+                    />
+                    <span>Same as director name?</span>
+                  </label>
+                </div>
+                <Input
+                  name="contact_name"
+                  placeholder="Contact fullname"
+                  value={formValues.contact_name}
+                  onChange={handleFieldChange}
+                  required
+                  disabled={!canEditProfile || isContactNameSameAsDirector}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </div>
+              <div className={GENERAL_DIV}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{fieldLabel("Contact number", true)}</span>
+                  <label className="inline-flex items-center gap-2 text-xs text-lime">
+                    <input
+                      type="checkbox"
+                      checked={isContactPhoneSameAsDirector}
+                      onChange={handleContactPhoneSyncChange}
+                      disabled={!canEditProfile}
+                      className={CHECKBOX_CLASS_NAME}
+                    />
+                    <span>Same as director phone number?</span>
+                  </label>
+                </div>
+                <Input
+                  name="contact_phone"
+                  placeholder="+2348012345678"
+                  value={formValues.contact_phone}
+                  onChange={handleFieldChange}
+                  inputMode="tel"
+                  maxLength={14}
+                  required
+                  disabled={!canEditProfile || isContactPhoneSameAsDirector}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </div>
+
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Contact email", true)}</span>
                 <Input
                   name="contact_email"
                   type="email"
-                  placeholder="company@email.com"
+                  placeholder="contact@example.com"
                   value={formValues.contact_email}
                   onChange={handleFieldChange}
                   required
@@ -1590,24 +1545,7 @@ function CompanyProfilePageContent() {
                 />
               </label>
               <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Contact phone number", true)}</span>
-                <Input
-                  name="contact_phone"
-                  type="tel"
-                  placeholder="e.g. 08012345678"
-                  value={formValues.contact_phone}
-                  onChange={handleFieldChange}
-                  inputMode="numeric"
-                  pattern="^0[789][01]\d{8}$"
-                  maxLength={14}
-                  spellCheck={false}
-                  required
-                  disabled={!canEditProfile}
-                  className={PLACEHOLDER_CLASS_NAME}
-                />
-              </label>
-              <label className={GENERAL_LABEL}>
-                <span>{fieldLabel("Contact website")}</span>
+                <span>{fieldLabel("Company website")}</span>
                 <Input
                   name="company_website"
                   type="url"
@@ -1621,123 +1559,135 @@ function CompanyProfilePageContent() {
             </div>
           </Card>
 
-          <Card className="mt-6 grid gap-6 bg-white/[0.01]">
-            <h2 className="font-display text-xl text-white">Address</h2>
+          <div className="mb-3" />
+
+          <Card className="grid gap-6 bg-white/[0.01]">
+            <div className="border-b border-white/10 pb-6">
+              <h2 className="font-display text-xl text-white">Preferences</h2>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
-                <span>{fieldLabel("Head office address")}</span>
-                <Textarea
-                  name="head_office_address"
-                  placeholder="Head office or registered address"
-                  value={formValues.head_office_address}
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Desired qualifications", true)}</span>
+                <MultiSelectDropdown
+                  placeholder="Select one or more qualifications"
+                  values={formValues.desired_qualification}
+                  groups={QUALIFICATION_OPTIONS}
+                  exclusiveOption={ANY_QUALIFICATION_OPTION}
+                  summaryClassName={dropdownSummaryClassName(formValues.desired_qualification)}
+                  onChange={(values) => updateFormValue("desired_qualification", values)}
+                  disabled={!canEditProfile}
+                />
+              </label>
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Desired field of study", true)}</span>
+                <MultiSelectDropdown
+                  placeholder="Select one or more fields of study"
+                  values={formValues.desired_field_of_study}
+                  groups={fieldOfStudyOptions}
+                  exclusiveOption={ANY_FIELD_OF_STUDY_OPTION}
+                  searchable
+                  searchPlaceholder="Type to filter fields of study"
+                  summaryClassName={dropdownSummaryClassName(formValues.desired_field_of_study)}
+                  emptyStateText="No fields of study match your search."
+                  onChange={(values) => updateFormValue("desired_field_of_study", values)}
+                  disabled={!canEditProfile}
+                />
+              </label>
+
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Desired universities", true)}</span>
+                <MultiSelectDropdown
+                  placeholder="Select desired universities"
+                  values={formValues.desired_university}
+                  groups={DESIRED_UNIVERSITY_OPTIONS}
+                  exclusiveOption={ANY_UNIVERSITY_OPTION}
+                  searchable
+                  searchPlaceholder="Type to filter universities"
+                  summaryClassName={dropdownSummaryClassName(formValues.desired_university)}
+                  emptyStateText="No university matches your search."
+                  onChange={(values) => updateFormValue("desired_university", values)}
+                  disabled={!canEditProfile}
+                />
+              </label>
+              <div className={GENERAL_DIV}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{fieldLabel("Desired posting state", true)}</span>
+                  <label className="inline-flex items-center gap-2 text-xs text-lime">
+                    <input
+                      type="checkbox"
+                      checked={isDesiredPostingStateSameAsPreferred}
+                      onChange={handleDesiredPostingStateSyncChange}
+                      disabled={!canEditProfile}
+                      className={CHECKBOX_CLASS_NAME}
+                    />
+                    <span>Same as Preferred states of deployment</span>
+                  </label>
+                </div>
+                <MultiSelectDropdown
+                  placeholder="Select desired posting states"
+                  values={formValues.desired_posting_states}
+                  groups={STATE_OF_OPERATION_OPTIONS}
+                  searchable
+                  searchPlaceholder="Type to filter states"
+                  summaryClassName={dropdownSummaryClassName(formValues.desired_posting_states)}
+                  emptyStateText="No state matches your search."
+                  onChange={(values) => updateFormValue("desired_posting_states", values)}
+                  disabled={!canEditProfile || isDesiredPostingStateSameAsPreferred}
+                />
+              </div>
+
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Desired skills", true)}</span>
+                <Input
+                  name="desired_skills"
+                  placeholder="Desired skills"
+                  value={formValues.desired_skills}
                   onChange={handleFieldChange}
+                  required
                   disabled={!canEditProfile}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
-              <div className="grid gap-2 overflow-visible md:col-span-2">
-                <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45">
-                  <span>{fieldLabel("Company address", true)}</span>
-                  <Textarea
-                    name="company_address"
-                    placeholder="Company address"
-                    value={formValues.company_address}
-                    onChange={handleFieldChange}
-                    required
-                    disabled={!canEditProfile}
-                    className={PLACEHOLDER_CLASS_NAME}
-                  />
-                </label>
-                <label className="flex items-center gap-2 text-xs text-mist">
-                  <input
-                    type="checkbox"
-                    checked={isCompanyAddressSameAsHeadOffice}
-                    onChange={handleCompanyAddressSyncChange}
-                    className={CHECKBOX_CLASS_NAME}
-                    disabled={!canEditProfile}
-                  />
-                  Same as head office address
-                </label>
-              </div>
+              <label className={GENERAL_LABEL}>
+                <span>{fieldLabel("Desired age range", true)}</span>
+                <Input
+                  name="desired_age_range"
+                  placeholder="e.g. 19 - 26"
+                  value={formValues.desired_age_range}
+                  onChange={handleFieldChange}
+                  required
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
+
+              <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                <span>{fieldLabel("Desired experience", true)}</span>
+                <Textarea
+                  name="desired_experience"
+                  placeholder="Desired experience"
+                  value={formValues.desired_experience}
+                  onChange={handleFieldChange}
+                  required
+                  disabled={!canEditProfile}
+                  className={PLACEHOLDER_CLASS_NAME}
+                />
+              </label>
             </div>
           </Card>
-
-          {!isEditMode ? (
-            <Card className="mt-6 grid gap-6 bg-white/[0.01]">
-              <h2 className="font-display text-xl text-white">
-                Director&apos;s information
-              </h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className={GENERAL_LABEL}>
-                  <span>{fieldLabel("Director name")}</span>
-                  <Input
-                    name="directors_name"
-                    placeholder="Director full name"
-                    value={formValues.directors_name}
-                    onChange={handleFieldChange}
-                    disabled={!canEditProfile}
-                    className={PLACEHOLDER_CLASS_NAME}
-                  />
-                </label>
-                <label className={GENERAL_LABEL}>
-                  <span>{fieldLabel("Director phone number")}</span>
-                  <Input
-                    name="director_phone_number"
-                    type="tel"
-                    placeholder="e.g. 08012345678"
-                    value={formValues.director_phone_number}
-                    onChange={handleFieldChange}
-                    inputMode="numeric"
-                    pattern="^0[789][01]\d{8}$"
-                    maxLength={14}
-                    spellCheck={false}
-                    disabled={!canEditProfile}
-                    className={PLACEHOLDER_CLASS_NAME}
-                  />
-                </label>
-              </div>
-              <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-mist">
-                    <input
-                      type="checkbox"
-                      checked={isContactNameSameAsDirector}
-                      onChange={handleContactNameSyncChange}
-                      className={CHECKBOX_CLASS_NAME}
-                      disabled={!canEditProfile}
-                    />
-                    Contact person is the same as director
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-mist">
-                    <input
-                      type="checkbox"
-                      checked={isContactPhoneSameAsDirector}
-                      onChange={handleContactPhoneSyncChange}
-                      className={CHECKBOX_CLASS_NAME}
-                      disabled={!canEditProfile}
-                    />
-                    Contact phone number is same as director
-                  </label>
-                </div>
-              </div>
-            </Card>
-          ) : null}
-
-          {canEditProfile ? (
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={isSaving}
-              >
-                {isSaving
-                  ? "Saving..."
-                  : isEditMode
-                    ? "Save changes"
+          <div className="mb-3" />
+          <div className="flex items-center justify-end">
+            <Button type="submit" disabled={isSaving || !canEditProfile}>
+              {isSaving
+                ? "Saving..."
+                : isEditMode
+                  ? "Save Changes"
+                  : !canEditProfile
+                    ? "Profile verified"
                     : "Submit"}
-              </Button>
-            </div>
-          ) : null}
+            </Button>
+          </div>
         </form>
       )}
     </DashboardShell>
