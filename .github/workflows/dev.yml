@@ -25,15 +25,13 @@ env:
   NODE_VERSION: "24.0"
 
 jobs:
-  detect-changes:
+  detect-web-changes:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
       web: ${{ steps.filter.outputs.web }}
-      api: ${{ steps.filter.outputs.api }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -44,13 +42,10 @@ jobs:
               - "package.json"
               - "package-lock.json"
               - "turbo.json"
-            api:
-              - "apps/api/**"
-              - "requirements.txt"
 
   lint-web:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.web == 'true'
+    needs: detect-web-changes
+    if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
@@ -78,9 +73,9 @@ jobs:
 
   test-web:
     needs:
-      - detect-changes
+      - detect-web-changes
       - lint-web
-    if: needs.detect-changes.outputs.web == 'true'
+    if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
@@ -105,9 +100,9 @@ jobs:
 
   build-web:
     needs:
-      - detect-changes
+      - detect-web-changes
       - test-web
-    if: needs.detect-changes.outputs.web == 'true'
+    if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     environment: development
@@ -146,9 +141,9 @@ jobs:
 
   deploy-web:
     needs:
-      - detect-changes
+      - detect-web-changes
       - build-web
-    if: needs.detect-changes.outputs.web == 'true'
+    if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: development
@@ -169,9 +164,23 @@ jobs:
       - name: Deploy Web
         run: bash scripts/deploy/web.sh dev
 
+  detect-api-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - "apps/api/**"
+              - "requirements.txt"
   lint-api:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.api == 'true'
+    needs: detect-api-changes
+    if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
@@ -206,9 +215,9 @@ jobs:
 
   test-api:
     needs:
-      - detect-changes
+      - detect-api-changes
       - lint-api
-    if: needs.detect-changes.outputs.api == 'true'
+    if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     environment: development
@@ -236,9 +245,9 @@ jobs:
 
   deploy-api:
     needs:
-      - detect-changes
+      - detect-api-changes
       - test-api
-    if: needs.detect-changes.outputs.api == 'true'
+    if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: development
