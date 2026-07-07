@@ -1728,7 +1728,6 @@ function CompanyProfilePageContent() {
               <Button
                 type="submit"
                 variant="primary"
-                size="lg"
                 disabled={isSaving}
               >
                 {isSaving
