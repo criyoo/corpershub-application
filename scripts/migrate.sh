@@ -130,7 +130,7 @@ resolve_task_definition_arn() {
     return
   fi
 
-  echo "Resolving ECS task definition: ${MIGRATION_TASK_DEFINITION}..."
+  echo "Resolving ECS task definition: ${MIGRATION_TASK_DEFINITION}..." >&2
   local base_task_definition_arn
   base_task_definition_arn="$(aws_with_auth ecs describe-task-definition \
     --region "${AWS_REGION}" \
