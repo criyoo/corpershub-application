@@ -63,11 +63,14 @@ class VerificationAttempt(UUIDPrimaryKeyModel):
         elif self.verification_type == self.VerificationType.NIN:
             if self.status == self.Status.APPROVED:
                 corper.nin_verification_status = corper_model.SensitiveStatus.VERIFIED
+                corper.biodata_verification_status = corper_model.SensitiveStatus.VERIFIED
             elif self.status == self.Status.REJECTED:
                 corper.nin_verification_status = corper_model.SensitiveStatus.REJECTED
             else:
                 corper.nin_verification_status = corper_model.SensitiveStatus.PENDING
             fields_to_update.append("nin_verification_status")
+            if self.status == self.Status.APPROVED:
+                fields_to_update.append("biodata_verification_status")
         elif self.verification_type == self.VerificationType.BIODATA:
             if self.status == self.Status.APPROVED:
                 corper.biodata_verification_status = corper_model.SensitiveStatus.VERIFIED

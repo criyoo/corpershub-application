@@ -642,7 +642,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.masked_callup_number, "NY****************56")
         self.assertEqual(corper.masked_state_code, "NYSC**********23")
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
-        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.PENDING)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
         self.assertEqual(corper.nysc_callup_verification_status, CorperProfile.SensitiveStatus.PENDING)
         self.assertEqual(corper.nysc_state_code_verification_status, CorperProfile.SensitiveStatus.PENDING)
         self.assertEqual(corper.nin_number, "12345678901")
@@ -785,7 +785,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(response.status_code, 201)
         corper = ensure_corper_profile(self.corper_user)
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
-        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.UNSUBMITTED)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
         self.assertEqual(corper.nin_number, "12345678901")
         self.assertEqual(corper.full_name, "")
         attempt = VerificationAttempt.objects.get(

@@ -139,6 +139,45 @@ const EMPTY_FORM_VALUES: FormValues = {
   preferred_organization_experience: "",
 };
 
+const PROFILE_DRAFT_STORAGE_KEY = "corpershub.corper-profile-draft";
+
+function loadProfileDraftFromStorage(): FormValues | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const stored = window.sessionStorage.getItem(PROFILE_DRAFT_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as FormValues;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return null;
+}
+
+function saveProfileDraftToStorage(values: FormValues) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(PROFILE_DRAFT_STORAGE_KEY, JSON.stringify(values));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearProfileDraftFromStorage() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.sessionStorage.removeItem(PROFILE_DRAFT_STORAGE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}
+
 const OTHER_UNIVERSITY_OPTION = "__other__";
 const OTHER_FIELD_OF_STUDY_OPTION = "__other_field_of_study__";
 const PREFERRED_SECTOR_OPTIONS = [
@@ -356,19 +395,32 @@ function CorperProfilePageContent() {
   const { data: courseCatalog, loading: courseCatalogLoading } =
     useApiQuery<CourseCatalogResponse>("/common/course-catalog/");
   const [profile, setProfile] = useState<CorperProfile | null>(null);
-  const [formValues, setFormValues] = useState<FormValues>(EMPTY_FORM_VALUES);
+  const [formValues, setFormValues] = useState<FormValues>(() => {
+    const stored = loadProfileDraftFromStorage();
+    return stored ?? EMPTY_FORM_VALUES;
+  });
   const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const generalLabel = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2"
+  const generalLableTwo = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3"
 
   useEffect(() => {
     if (!data) {
       return;
     }
     setProfile(data);
-    setFormValues(mapProfileToForm(data));
+    const stored = loadProfileDraftFromStorage();
+    if (!stored) {
+      setFormValues(mapProfileToForm(data));
+    }
   }, [data]);
+
+  useEffect(() => {
+    saveProfileDraftToStorage(formValues);
+  }, [formValues]);
 
   useEffect(() => {
     return () => {
@@ -602,6 +654,7 @@ function CorperProfilePageContent() {
         URL.revokeObjectURL(photoPreviewUrl);
       }
       setPhotoPreviewUrl(null);
+      clearProfileDraftFromStorage();
 
       if (session) {
         updateSession({
@@ -756,7 +809,7 @@ function CorperProfilePageContent() {
               <section className="grid gap-4">
                 <h2 className="text-base font-semibold text-white">Corper Details</h2>
                 <div className="grid gap-4 md:grid-cols-6">
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>NIN Number</span>
                     <Input
                       value={profile.nin_number}
@@ -764,7 +817,7 @@ function CorperProfilePageContent() {
                       placeholder="Approved NIN will appear here"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>NYSC Call-Up Number</span>
                     <Input
                       value={profile.nysc_callup_number}
@@ -772,7 +825,7 @@ function CorperProfilePageContent() {
                       placeholder="Approved call-up number will appear here"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>NYSC State Code</span>
                     <Input
                       value={profile.nysc_state_code}
@@ -780,7 +833,7 @@ function CorperProfilePageContent() {
                       placeholder="Approved state code will appear here"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>First name</span>
                     <Input
                       name="first_name"
@@ -791,7 +844,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>Middle name</span>
                     <Input
                       name="middle_name"
@@ -801,7 +854,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>Surname</span>
                     <Input
                       name="surname"
@@ -812,7 +865,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Date of birth</span>
                     <Input
                       name="date_of_birth"
@@ -823,7 +876,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Gender</span>
                     <Select
                       name="gender"
@@ -839,7 +892,7 @@ function CorperProfilePageContent() {
                       ))}
                     </Select>
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>State of origin</span>
                     <Input
                       name="state_of_origin"
@@ -849,7 +902,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Country of birth</span>
                     <Input
                       name="country_of_birth"
@@ -859,7 +912,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>University Matriculation Number</span>
                     <Input
                       name="university_matriculation_number"
@@ -869,7 +922,7 @@ function CorperProfilePageContent() {
                       disabled
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Posting state</span>
                     <Select
                       name="posting_location_state"
@@ -886,7 +939,7 @@ function CorperProfilePageContent() {
                       ))}
                     </Select>
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Batch</span>
                     <Select
                       name="batch"
@@ -903,7 +956,7 @@ function CorperProfilePageContent() {
                       ))}
                     </Select>
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Stream</span>
                     <Select
                       name="stream"
@@ -920,7 +973,7 @@ function CorperProfilePageContent() {
                       ))}
                     </Select>
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Email address</span>
                     <Input
                       value={profile?.email ?? session?.user.email ?? ""}
@@ -928,7 +981,7 @@ function CorperProfilePageContent() {
                       placeholder="Email address"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Mobile number</span>
                     <Input
                       name="mobile_number"
@@ -941,7 +994,7 @@ function CorperProfilePageContent() {
                       disabled={!canEditFullProfile}
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Field of study</span>
                     <SearchableSelectDropdown
                       placeholder={courseCatalogLoading ? "Loading fields of study..." : "Select your field of study"}
@@ -966,7 +1019,7 @@ function CorperProfilePageContent() {
                       searchPlaceholder="Search for your field of study"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Highest Degree</span>
                     <Select
                       name="degree"
@@ -1000,7 +1053,7 @@ function CorperProfilePageContent() {
                       />
                     </label>
                   ) : null}
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>University</span>
                     <SearchableSelectDropdown
                       placeholder="Select your university"
@@ -1025,7 +1078,7 @@ function CorperProfilePageContent() {
                       searchPlaceholder="Search for your university"
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Graduation Year</span>
                     <Select
                       name="graduation_year"
@@ -1055,7 +1108,7 @@ function CorperProfilePageContent() {
                       />
                     </label>
                   ) : null}
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Technical Skills</span>
                     <Input
                       name="technical_skills"
@@ -1066,7 +1119,7 @@ function CorperProfilePageContent() {
                       disabled={!canEditProfile}
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Soft Skills</span>
                     <Input
                       name="soft_skills"
@@ -1077,7 +1130,7 @@ function CorperProfilePageContent() {
                       disabled={!canEditProfile}
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Languages Spoken</span>
                     <Input
                       name="languages_spoken"
@@ -1088,7 +1141,7 @@ function CorperProfilePageContent() {
                       disabled={!canEditProfile}
                     />
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3">
+                  <label className={generalLableTwo}>
                     <span>Available Date</span>
                     <Input
                       name="available_date"
@@ -1180,7 +1233,7 @@ function CorperProfilePageContent() {
                       ))}
                     </Select>
                   </label>
-                  <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2">
+                  <label className={generalLabel}>
                     <span>Experience</span>
                     <Textarea
                       name="preferred_organization_experience"

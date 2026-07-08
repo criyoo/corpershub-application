@@ -528,12 +528,14 @@ class VerificationAttemptListCreateAPIView(generics.ListCreateAPIView):
                             )
                             corper.nin_number = submitted_value
                             corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
+                            corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
                             corper.save(
                                 update_fields=[
                                     "nin_number",
                                     "nin_last4",
                                     "nin_lookup_hash",
                                     "nin_verification_status",
+                                    "biodata_verification_status",
                                     "updated_at",
                                 ]
                             )

@@ -2,14 +2,18 @@
 
 set -euo pipefail
 
+echo "Starting migration script..."
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/deploy" && pwd)/common.sh"
 
 set_environment_defaults "${1:-dev}"
+echo "Environment: ${ENVIRONMENT:-dev}, AWS Region: ${AWS_REGION:-}"
 set_aws_auth_mode
 
+echo "Checking required commands..."
 require_cmd python3
 require_cmd tr
 require_cmd mktemp
+echo "Required commands satisfied."
 # ensure_aws_auth
 
 ECS_CLUSTER_NAME="${NAME_PREFIX}-cluster"
@@ -18,6 +22,7 @@ DB_INSTANCE_IDENTIFIER="${NAME_PREFIX}-postgres"
 MIGRATION_LOG_GROUP="/ecs/${NAME_PREFIX}-migration"
 RUN_SEED_DEMO_DATA="${RUN_SEED_DEMO_DATA:-0}"
 
+echo "Resolving VPC resources (public subnets and app security group)..."
 resolve_public_subnets
 resolve_app_security_group
 
@@ -32,15 +37,16 @@ db_status="$(aws_with_auth rds describe-db-instances \
 
 case "${db_status}" in
   available)
-    echo "database is available"
+    echo "Database is available."
     ;;
   starting|backing-up|configuring-enhanced-monitoring|configuring-iam-database-auth|maintenance|modifying|rebooting|renaming|resetting-master-credentials|storage-optimization|upgrading)
+    echo "Database is busy (${db_status}), waiting for it to become available..."
     aws_with_auth rds wait db-instance-available \
       --region "${AWS_REGION}" \
       --db-instance-identifier "${DB_INSTANCE_IDENTIFIER}"
     ;;
   stopped|stopping)
-    echo "database has a status of stopped or stopping, existing....."
+    echo "Database is stopped/stopping, exiting."
     exit 0
     ;;
   *)
@@ -124,6 +130,7 @@ resolve_task_definition_arn() {
     return
   fi
 
+  echo "Resolving ECS task definition: ${MIGRATION_TASK_DEFINITION}..."
   local base_task_definition_arn
   base_task_definition_arn="$(aws_with_auth ecs describe-task-definition \
     --region "${AWS_REGION}" \
@@ -202,6 +209,8 @@ print_task_logs() {
 
 run_task() {
   local command="$1"
+  echo "Running task: ${command}"
+
   local overrides
   local task_arn
   local exit_code
@@ -249,10 +258,12 @@ run_task() {
 }
 
 if run_task "$(app_command "python manage.py has_pending_migrations")"; then
+  echo "No pending migrations."
   pending_migrations=0
 else
   status=$?
   if [ "${status}" = "10" ]; then
+    echo "Pending migrations found."
     pending_migrations=1
   else
     exit "${status}"
@@ -260,15 +271,20 @@ else
 fi
 
 if [ "${pending_migrations}" = "1" ]; then
+  echo "Running database migrations..."
   run_task "$(app_command "python manage.py migrate --noinput")"
 fi
 
+echo "Collecting static files..."
 run_task "$(app_command "python manage.py collectstatic --noinput --clear --verbosity=0")"
 
+echo "Syncing subscription plans..."
 run_task "$(app_command "python manage.py sync_subscription_plans")"
 
 if [ "${RUN_SEED_DEMO_DATA}" = "1" ]; then
+  echo "Seeding demo data..."
   run_task "$(app_command "python manage.py seed_demo_data")"
 fi
 
+echo "Creating superuser..."
 run_task "$(app_command "python manage.py create_superuser")"
