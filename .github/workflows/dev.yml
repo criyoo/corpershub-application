@@ -179,6 +179,7 @@ jobs:
           filters: |
             api:
               - "apps/api/**"
+              - "apps/worker/**"
               - "requirements.txt"
               - "scripts/**"
 
