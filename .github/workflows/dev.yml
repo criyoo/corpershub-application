@@ -39,9 +39,11 @@ jobs:
             web:
               - "apps/web/**"
               - "packages/**"
+              - "scripts/**"
               - "package.json"
               - "package-lock.json"
               - "turbo.json"
+
 
   lint-web:
     needs: detect-web-changes
@@ -178,6 +180,8 @@ jobs:
             api:
               - "apps/api/**"
               - "requirements.txt"
+              - "scripts/**"
+
   lint-api:
     needs: detect-api-changes
     if: needs.detect-api-changes.outputs.api == 'true'

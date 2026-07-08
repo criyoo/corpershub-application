@@ -4,6 +4,22 @@ Base URL: `/api`
 
 This document reflects the current Corpershub route surface in the repo.
 
+## Environment URLs
+
+### Production
+
+- Web frontend: `https://corpershub.ng`
+- API: `https://api.corpershub.ng`
+- Django admin: `https://api.corpershub.ng/admin/`
+- Web admin panel: `https://corpershub.ng/admin/`
+
+### Development
+
+- Web frontend: `https://dev.corpershub.ng`
+- API: `https://api.dev.corpershub.ng`
+- Django admin: `https://api.dev.corpershub.ng/admin/`
+- Web admin panel: `https://dev.corpershub.ng/admin/`
+
 ## Authentication
 
 - `POST /auth/register/`
