@@ -1,9 +1,9 @@
-name: Deploy development
+name: Deploy Production
 
 on:
   push:
     branches:
-      - development
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: deploy-development
+  group: deploy-production
   cancel-in-progress: false
 
 env:
@@ -39,20 +39,17 @@ jobs:
             web:
               - "apps/web/**"
               - "apps/packages/**"
-              - "apps/scripts/deploy/common.sh"
-              - "apps/scripts/deploy/web.sh"
-              - "apps/scripts/deploy/invalidate_web.sh"
+              - "apps/scripts/**"
               - "apps/package.json"
               - "apps/package-lock.json"
               - "apps/turbo.json"
-
 
   lint-web:
     needs: detect-web-changes
     if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    environment: development
+    timeout-minutes: 20
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -80,8 +77,8 @@ jobs:
       - lint-web
     if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    environment: development
+    timeout-minutes: 20
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -106,8 +103,8 @@ jobs:
       - test-web
     if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
-    environment: development
+    timeout-minutes: 30
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -147,8 +144,8 @@ jobs:
       - build-web
     if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: development
+    timeout-minutes: 45
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -164,10 +161,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Web
-        run: bash apps/scripts/deploy/web.sh dev
+        run: bash apps/scripts/deploy/web.sh prod
 
-
-
+        
   detect-api-changes:
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -183,16 +179,14 @@ jobs:
               - "apps/api/**"
               - "apps/worker/**"
               - "apps/api/requirements.txt"
-              - "apps/scripts/deploy/common.sh"
-              - "apps/scripts/deploy/api.sh"
-              - "apps/scripts/migrate.sh"
+              - "apps/scripts/**"
 
   lint-api:
     needs: detect-api-changes
     if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    environment: development
+    timeout-minutes: 20
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -228,8 +222,8 @@ jobs:
       - lint-api
     if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 2
-    environment: development
+    timeout-minutes: 30
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -258,8 +252,8 @@ jobs:
       - test-api
     if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: development
+    timeout-minutes: 60
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -276,4 +270,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy API
-        run: bash apps/scripts/deploy/api.sh dev
+        run: bash apps/scripts/deploy/api.sh prod
