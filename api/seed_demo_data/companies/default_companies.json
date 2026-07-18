@@ -1,0 +1,256 @@
+{
+    "airtel": {
+        "email": "criyo.career+airtel@gmail.com",
+        "password": "ifG0dbi4mi",
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/companies/airtel.webp",
+            "company_name": "Airtel Nigeria",
+            "company_registration_number": "RC 17872638",
+            "tax_identification_number": "3728172647316",
+            "state": "Kaduna",
+            "city": "Kaduna",
+            "sector": "Telecommunications",
+            "organisation_type": "Public Organisation",
+            "number_of_staff": "Above 1000",
+            "ppa_capacity": "3",
+            "number_of_office_location": "5",
+            "placement_type": "Part-Time/On-Site",
+            "monthly_allowance_offered": "N50,000-N100,000",
+            "ppa_support": "Yes",
+            "preferred_state_of_deployment": [
+                "Rivers",
+                "Lagos",
+                "Abuja"
+            ],
+            "company_summary": "Airtel Nigeria is a leading telecommunications company providing mobile and broadband services across Nigeria.",
+            "company_contact_details": {
+                "head_office_address": "",
+                "company_operation_address": "23 Airtel Drive",
+                "directors_name": "John Doe",
+                "directors_phone_number": "+234 801 234 5678",
+                "contact_name": "Jane Smith",
+                "contact_phone_number": "+234 802 345 6789",
+                "contact_email": "jane.smith@airtel.com",
+                "company_website": "https://airtel.com"
+            },
+            "corpers_requirement": {
+                "desired_qualifications": [
+                    "B.Sc",
+                    "M.Sc",
+                    "PhD"
+                ],
+                "desired_field_of_study": [
+                    "Electrical & Electronics Engineering",
+                    "Computer Science",
+                    "Information Technology",
+                    "Telecommunications"
+                ],
+                "desired_univeristies": [
+                    "University of Lagos"
+                ],
+                "desired_posting_states": [
+                    "Abuja",
+                    "Rivers"
+                ],
+                "desired_skills": [
+                    "farming",
+                    "data analysis",
+                    "aeroponics"
+                ],
+                "desired_age_range": "21-35",
+                "desired_experience": "1 - 3 years experience in telecommunications, science, engineering or any related field is desirable"
+            }
+        }
+    },
+    "cisco": {
+        "email": "criyo.career+cisco@gmail.com",
+        "password": "ifG0dbi4mi",
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/companies/cisco.webp",
+            "company_name": "Cisco Nigeria",
+            "company_registration_number": "RC 17872640",
+            "tax_identification_number": "3728172647318",
+            "state": "Rivers",
+            "city": "Port Harcourt",
+            "sector": "Technology & ICT",
+            "organisation_type": "Private Organisation",
+            "number_of_staff": "201-500",
+            "ppa_capacity": "6",
+            "number_of_office_location": "3",
+            "placement_type": "Full-Time/Hybrid",
+            "monthly_allowance_offered": "N50,000-N100,000",
+            "ppa_support": "Yes",
+            "preferred_state_of_deployment": [
+                "Rivers",
+                "Lagos",
+                "Abuja (FCT)"
+            ],
+            "company_summary": "Cisco Nigeria provides enterprise networking, cybersecurity, cloud and collaboration solutions for public and private sector organisations across Nigeria.",
+            "company_contact_details": {
+                "head_office_address": "12 Marina Business Park, Lagos",
+                "company_operation_address": "23 Cisco Drive, Port Harcourt",
+                "directors_name": "Chinedu Okafor",
+                "directors_phone_number": "+234 803 456 7810",
+                "contact_name": "Ifeoma Peters",
+                "contact_phone_number": "+234 802 456 7811",
+                "contact_email": "recruitment@cisco.ng",
+                "company_website": "https://www.cisco.com"
+            },
+            "corpers_requirement": {
+                "desired_qualifications": [
+                    "B.Sc",
+                    "M.Sc",
+                    "PhD"
+                ],
+                "desired_field_of_study": [
+                    "Computer Engineering",
+                    "Computer Science",
+                    "Information Technology",
+                    "Cybersecurity"
+                ],
+                "desired_univeristies": [
+                    "University of Lagos",
+                    "University of Port Harcourt"
+                ],
+                "desired_posting_states": [
+                    "Rivers",
+                    "Lagos"
+                ],
+                "desired_skills": [
+                    "network administration",
+                    "cybersecurity",
+                    "technical support"
+                ],
+                "desired_age_range": "21-32",
+                "desired_experience": "0 - 2 years experience in networking, IT support, cybersecurity or related technical roles is desirable"
+            }
+        }
+    },
+    "bmw": {
+        "email": "criyo.career+bmw@gmail.com",
+        "password": "ifG0dbi4mi",
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/companies/bmw.webp",
+            "company_name": "BMW Nigeria",
+            "company_registration_number": "RC 17872641",
+            "tax_identification_number": "3728172647319",
+            "state": "Abuja (FCT)",
+            "city": "Garki",
+            "sector": "Automotive",
+            "organisation_type": "Private Organisation",
+            "number_of_staff": "101-200",
+            "ppa_capacity": "4",
+            "number_of_office_location": "2",
+            "placement_type": "Full-Time/On-Site",
+            "monthly_allowance_offered": "N50,000-N100,000",
+            "ppa_support": "Yes",
+            "preferred_state_of_deployment": [
+                "Abuja (FCT)",
+                "Lagos"
+            ],
+            "company_summary": "BMW Nigeria operates premium vehicle sales, servicing and customer experience centres for luxury automotive clients in Nigeria.",
+            "company_contact_details": {
+                "head_office_address": "Plot 8 Automotive Avenue, Victoria Island, Lagos",
+                "company_operation_address": "23 BMW Drive, Garki, Abuja",
+                "directors_name": "Amina Bello",
+                "directors_phone_number": "+234 803 567 8920",
+                "contact_name": "David Adeyemi",
+                "contact_phone_number": "+234 802 567 8921",
+                "contact_email": "careers@bmw.ng",
+                "company_website": "https://www.bmw.com/en/index.html"
+            },
+            "corpers_requirement": {
+                "desired_qualifications": [
+                    "B.Sc",
+                    "HND",
+                    "OND"
+                ],
+                "desired_field_of_study": [
+                    "Mechanical Engineering",
+                    "Electrical & Electronics Engineering",
+                    "Business Administration",
+                    "Marketing"
+                ],
+                "desired_univeristies": [
+                    "Ahmadu Bello University",
+                    "University of Lagos"
+                ],
+                "desired_posting_states": [
+                    "Abuja (FCT)",
+                    "Lagos"
+                ],
+                "desired_skills": [
+                    "customer service",
+                    "automotive diagnostics",
+                    "sales support"
+                ],
+                "desired_age_range": "21-33",
+                "desired_experience": "0 - 2 years experience in automotive operations, customer service, sales or engineering support is desirable"
+            }
+        }
+    },
+    "rain": {
+        "email": "criyo.career+rain@gmail.com",
+        "password": "ifG0dbi4mi",
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/companies/rain.jpg",
+            "company_name": "Rain Nigeria",
+            "company_registration_number": "RC 17872642",
+            "tax_identification_number": "3728172647320",
+            "state": "Lagos",
+            "city": "Lekki",
+            "sector": "Healthcare & Pharmaceuticals",
+            "organisation_type": "Private Organisation",
+            "number_of_staff": "51-100",
+            "ppa_capacity": "5",
+            "number_of_office_location": "4",
+            "placement_type": "Part-Time/Hybrid",
+            "monthly_allowance_offered": "N30,000-N50,000",
+            "ppa_support": "Yes",
+            "preferred_state_of_deployment": [
+                "Lagos",
+                "Oyo",
+                "Ogun"
+            ],
+            "company_summary": "Rain Nigeria distributes wellness products, coordinates community health campaigns and supports preventive health education programmes.",
+            "company_contact_details": {
+                "head_office_address": "18 Admiralty Way, Lekki Phase 1, Lagos",
+                "company_operation_address": "23 Rain Drive, Lekki, Lagos",
+                "directors_name": "Kemi Alade",
+                "directors_phone_number": "+234 803 678 9030",
+                "contact_name": "Tolu Banjo",
+                "contact_phone_number": "+234 802 678 9031",
+                "contact_email": "talent@rain.ng",
+                "company_website": "https://rain.ng"
+            },
+            "corpers_requirement": {
+                "desired_qualifications": [
+                    "B.Sc",
+                    "HND",
+                    "OND"
+                ],
+                "desired_field_of_study": [
+                    "Public Health",
+                    "Biochemistry",
+                    "Nutrition and Dietetics",
+                    "Mass Communication"
+                ],
+                "desired_univeristies": [
+                    "University of Lagos",
+                    "University of Ibadan"
+                ],
+                "desired_posting_states": [
+                    "Lagos",
+                    "Oyo"
+                ],
+                "desired_skills": [
+                    "community engagement",
+                    "inventory coordination",
+                    "health education"
+                ],
+                "desired_age_range": "21-32",
+                "desired_experience": "0 - 2 years experience in health outreach, wellness operations, distribution support or communications is desirable"
+            }
+        }
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Corpershub",
+  "private": true,
+  "workspaces": [
+    "web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker compose -f ../infra/docker-compose.yml up",
+    "dev:web": "npm -w web run dev",
+    "build:web": "npm -w web run build",
+    "lint:web": "npm -w web run lint",
+    "test:web": "npm -w web run test"
+  },
+  "dependencies": {
+    "typescript": "^6.0.3",
+    "whatwg-encoding": "file:packages/whatwg-encoding"
+  }
+}

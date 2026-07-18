@@ -1,0 +1,186 @@
+{
+    "sharon": {
+        "email": "criyo.career+sharon@gmail.com",
+        "full_name": "Sharon Emmanuel",
+        "password": "ifG0dbi4mi",
+        "verification_information": {
+            "date_of_birth": "13/03/2005",
+            "university_matriculation_number": "LAG/2020/54321",
+            "national_identifaction_number": "98736274637",
+            "nysc_callup_number": "NYSC/PHC/2026/123456",
+            "nysc_state_code": "NYSC/LA/24B/1234"
+        },
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/corpers/sharon.jpg",
+            "gender": "female",
+            "posting_state": "Lagos",
+            "batch": "B",
+            "stream": "1",
+            "mobile_number": "+2348061726475",
+            "field_of_study": "Agriculture",
+            "highest_degree": "B.Sc",
+            "university": "University of Port Harcourt",
+            "graduation_year": "2025",
+            "technical_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "soft_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "language_spoken": [
+                "English",
+                "Hausa"
+            ],
+            "available_date": "12/07/2026",
+            "bio": "Sharon Emmanuel is a dedicated professional with a passion for agriculture and data analysis. She is committed to making a positive impact in her community.",
+            "prefered_organisation": {
+                "preferred_sector": "Oil & Gas",
+                "prefered_organisation_type": "Private Organisation",
+                "Preferred_placement_type": "Full-time/Remote",
+                "preferred_monthly_allowance": "N20,000 - N50,000"
+            }
+        }
+    },
+    "musa": {
+        "email": "criyo.career+musa@gmail.com",
+        "full_name": "Musa Aliyu",
+        "password": "ifG0dbi4mi",
+        "verification_information": {
+            "date_of_birth": "25/01/2001",
+            "university_matriculation_number": "LAG/2019/54321",
+            "national_identifaction_number": "62746398737",
+            "nysc_callup_number": "NYSC/KAD/2025/453123",
+            "nysc_state_code": "NYSC/RV/26B/32712"
+        },
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/corpers/musa.jpg",
+            "gender": "male",
+            "posting_state": "Rivers",
+            "batch": "B",
+            "stream": "2",
+            "mobile_number": "+2349061378147",
+            "field_of_study": "Petroleum Engineering",
+            "highest_degree": "B.Eng",
+            "university": "Kaduna State University",
+            "graduation_year": "2025",
+            "technical_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "soft_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "language_spoken": [
+                "English",
+                "Hausa"
+            ],
+            "available_date": "12/07/2026",
+            "bio": "Musa Aliyu is a dedicated professional with a passion for petroleum engineering and data analysis. He is committed to making a positive impact in his community.",
+            "prefered_organisation": {
+                "preferred_sector": "Oil & Gas",
+                "prefered_organisation_type": "Private Organisation",
+                "Preferred_placement_type": "Full-time/Remote",
+                "preferred_monthly_allowance": "N20,000 - N50,000"
+            }
+        }
+    },
+    "adaeze": {
+        "email": "criyo.career+adaeze@gmail.com",
+        "full_name": "Adaeze Okonkwo",
+        "password": "ifG0dbi4mi",
+        "verification_information": {
+            "date_of_birth": "25/01/2001",
+            "university_matriculation_number": "IMO/2021/7352",
+            "national_identifaction_number": "21461187378",
+            "nysc_callup_number": "NYSC/IMO/2025/453123",
+            "nysc_state_code": "NYSC/KN/26A/40326"
+        },
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/corpers/adaeze.jpg",
+            "gender": "female",
+            "posting_state": "Kano",
+            "batch": "A",
+            "stream": "1",
+            "mobile_number": "+2347161362184",
+            "field_of_study": "Computer Science",
+            "highest_degree": "B.Eng",
+            "university": "Imo State University",
+            "graduation_year": "2025",
+            "technical_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "soft_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "language_spoken": [
+                "English",
+                "Hausa"
+            ],
+            "available_date": "12/07/2026",
+            "bio": "Adaeze Okonkwo is a dedicated professional with a passion for computer science and data analysis. She is committed to making a positive impact in her community.",
+            "prefered_organisation": {
+                "preferred_sector": "Technology",
+                "prefered_organisation_type": "Private Organisation",
+                "Preferred_placement_type": "Full-time/Remote",
+                "preferred_monthly_allowance": "N20,000 - N50,000"
+            }
+        }
+    },
+    "anu": {
+        "email": "criyo.career+anu@gmail.com",
+        "full_name": "Anu-oluwapo Ojo",
+        "password": "ifG0dbi4mi",
+        "verification_information": {
+            "date_of_birth": "25/01/2002",
+            "university_matriculation_number": "OAU/2019/7352",
+            "national_identifaction_number": "78945612301",
+            "nysc_callup_number": "NYSC/IFE/2025/763185",
+            "nysc_state_code": "NYSC/AB/26B/40327"
+        },
+        "profile": {
+            "photo": "corpershub/apps/api/seed_demo_data/corpers/anu.jpg",
+            "gender": "female",
+            "posting_state": "Abuja",
+            "batch": "B",
+            "stream": "1",
+            "mobile_number": "+2348034567890",
+            "field_of_study": "Medicine",
+            "highest_degree": "MBBS",
+            "university": "Obafemi Awolowo University",
+            "graduation_year": "2025",
+            "technical_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "soft_skills": [
+                "farming",
+                "data analysis",
+                "aeroponics"
+            ],
+            "language_spoken": [
+                "English",
+                "Hausa"
+            ],
+            "available_date": "12/07/2026",
+            "bio": "Anu-oluwapo Ojo is a dedicated professional with a passion for medicine and patient care. She is committed to making a positive impact in her community.",
+            "prefered_organisation": {
+                "preferred_sector": "Healthcare",
+                "prefered_organisation_type": "Private Organisation",
+                "Preferred_placement_type": "Full-time/Remote",
+                "preferred_monthly_allowance": "N20,000 - N50,000"
+            }
+        }
+    }
+}
