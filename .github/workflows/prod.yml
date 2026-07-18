@@ -150,7 +150,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-          path: .
+          path: web/out
+
+      - name: Verify web build artifact
+        run: test -f web/out/index.html
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
