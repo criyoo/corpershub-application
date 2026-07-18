@@ -65,6 +65,7 @@ MIDDLEWARE = [
     "apps.common.middleware.HealthCheckCommonMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.common.middleware.AsyncStreamingResponseMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
