@@ -20,7 +20,7 @@ export default function SectorsPage() {
           <p className="text-sm uppercase tracking-[0.26em] text-lime">Sectors</p>
           <h1 className="mt-4 font-display text-4xl text-white">Sectors with PPA opportunities</h1>
           <p className="mt-4 text-base leading-7 text-mist md:text-lg">
-            Explore sectors with PPA opportunities and matching preferences.
+            Find PPA opportunities and matching preferences within different sectors.
           </p>
         </div>
 
