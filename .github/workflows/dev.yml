@@ -37,14 +37,15 @@ jobs:
         with:
           filters: |
             web:
-              - "apps/web/**"
-              - "apps/packages/**"
-              - "apps/scripts/deploy/common.sh"
-              - "apps/scripts/deploy/web.sh"
-              - "apps/scripts/deploy/invalidate_web.sh"
-              - "apps/package.json"
-              - "apps/package-lock.json"
-              - "apps/turbo.json"
+              - "web/**"
+              - "packages/**"
+              - "scripts/deploy/common.sh"
+              - "scripts/deploy/web.sh"
+              - "scripts/deploy/invalidate_web.sh"
+              - "package.json"
+              - "package-lock.json"
+              - "turbo.json"
+              - ".github/workflows/dev.yml"
 
 
   lint-web:
@@ -61,18 +62,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: |
-            apps/package-lock.json
+            package-lock.json
 
       - name: Install frontend dependencies
         run: |
-          npm --prefix apps ci
-          node apps/scripts/ensure-rollup-native.cjs apps/web
+          npm ci
+          node scripts/ensure-rollup-native.cjs web
 
       - name: Lint frontend
-        run: npm --prefix apps run lint --workspace web
+        run: npm run lint --workspace web
 
       - name: Typecheck frontend
-        run: npm --prefix apps run typecheck --workspace web
+        run: npm run typecheck --workspace web
 
   test-web:
     needs:
@@ -90,15 +91,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: |
-            apps/package-lock.json
+            package-lock.json
 
       - name: Install frontend dependencies
         run: |
-          npm --prefix apps ci
-          node apps/scripts/ensure-rollup-native.cjs apps/web
+          npm ci
+          node scripts/ensure-rollup-native.cjs web
 
       - name: Test frontend
-        run: npm --prefix apps run test --workspace web
+        run: npm run test --workspace web
 
   build-web:
     needs:
@@ -116,28 +117,28 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: |
-            apps/package-lock.json
+            package-lock.json
 
       - name: Install frontend dependencies
         run: |
-          npm --prefix apps ci
-          node apps/scripts/ensure-rollup-native.cjs apps/web
+          npm ci
+          node scripts/ensure-rollup-native.cjs web
 
       - name: Build frontend
-        run: npm --prefix apps run build --workspace web
+        run: npm run build --workspace web
 
       - name: Upload web build artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: |
-            apps/web/.next
-            apps/web/public
-            apps/web/package.json
-            apps/web/next.config.*
-            apps/package.json
-            apps/package-lock.json
-            apps/turbo.json
+            web/.next
+            web/public
+            web/package.json
+            web/next.config.*
+            package.json
+            package-lock.json
+            turbo.json
           retention-days: 1
           include-hidden-files: true
 
@@ -164,7 +165,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Web
-        run: bash apps/scripts/deploy/web.sh dev
+        run: bash scripts/deploy/web.sh dev
 
 
 
@@ -180,12 +181,12 @@ jobs:
         with:
           filters: |
             api:
-              - "apps/api/**"
-              - "apps/worker/**"
-              - "apps/api/requirements.txt"
-              - "apps/scripts/deploy/common.sh"
-              - "apps/scripts/deploy/api.sh"
-              - "apps/scripts/migrate.sh"
+              - "api/**"
+              - "worker/**"
+              - "scripts/deploy/common.sh"
+              - "scripts/deploy/api.sh"
+              - "scripts/migrate.sh"
+              - ".github/workflows/dev.yml"
 
   lint-api:
     needs: detect-api-changes
@@ -200,25 +201,25 @@ jobs:
         with:
           python-version: "${{ env.PYTHON_VERSION }}"
           cache: pip
-          cache-dependency-path: apps/api/requirements.txt
+          cache-dependency-path: api/requirements.txt
 
       - name: Install backend dependencies
         run: |
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r apps/api/requirements.txt
+          pip install -r api/requirements.txt
 
       - name: Check migrations
         run: |
           source .venv/bin/activate
-          cd apps/api
+          cd api
           python manage.py makemigrations --check --dry-run --settings=config.settings.test
 
       - name: Lint backend
         run: |
           source .venv/bin/activate
-          cd apps/api
+          cd api
           ruff format .
           ruff check .
 
@@ -237,19 +238,19 @@ jobs:
         with:
           python-version: "${{ env.PYTHON_VERSION }}"
           cache: pip
-          cache-dependency-path: apps/api/requirements.txt
+          cache-dependency-path: api/requirements.txt
 
       - name: Install backend dependencies
         run: |
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r apps/api/requirements.txt
+          pip install -r api/requirements.txt
 
       - name: Run backend tests
         run: |
           source .venv/bin/activate
-          cd apps/api
+          cd api
           python manage.py test --settings=config.settings.test
 
   deploy-api:
@@ -276,4 +277,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy API
-        run: bash apps/scripts/deploy/api.sh dev
+        run: bash scripts/deploy/api.sh dev
