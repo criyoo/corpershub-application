@@ -124,6 +124,10 @@ jobs:
           node scripts/ensure-rollup-native.cjs web
 
       - name: Build frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.corpershub.ng/api
+          NEXT_PUBLIC_WS_URL: wss://api.corpershub.ng
+          NEXT_PUBLIC_HOME_BACKGROUNDS_MANIFEST_URL: https://api.corpershub.ng/api/home-backgrounds/
         run: npm run build --workspace web
 
       - name: Upload web build artifact

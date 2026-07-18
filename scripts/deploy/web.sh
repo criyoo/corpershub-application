@@ -67,6 +67,10 @@ fi
 
 [ -d "${WEB_DIR}/out" ] || fail "Next export output not found."
 
+if grep -R -q "localhost:" "${WEB_DIR}/out"; then
+  fail "Web build contains localhost URLs. Rebuild with NEXT_PUBLIC_API_BASE_URL=https://${API_DOMAIN}/api and NEXT_PUBLIC_WS_URL=wss://${API_DOMAIN}."
+fi
+
 if [ -d "${WEB_DIR}/out/_next/static" ]; then
   aws_with_auth s3 sync "${WEB_DIR}/out/_next/static/" "s3://${BUCKET_NAME}/_next/static/" \
     --region "${AWS_REGION}" \

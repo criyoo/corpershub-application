@@ -45,6 +45,7 @@ jobs:
               - "package.json"
               - "package-lock.json"
               - "turbo.json"
+              - ".github/workflows/dev.yml"
 
 
   lint-web:
@@ -124,6 +125,10 @@ jobs:
           node scripts/ensure-rollup-native.cjs web
 
       - name: Build frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.dev.corpershub.ng/api
+          NEXT_PUBLIC_WS_URL: wss://api.dev.corpershub.ng
+          NEXT_PUBLIC_HOME_BACKGROUNDS_MANIFEST_URL: https://api.dev.corpershub.ng/api/home-backgrounds/
         run: npm run build --workspace web
 
       - name: Upload web build artifact
@@ -182,6 +187,7 @@ jobs:
               - "scripts/deploy/common.sh"
               - "scripts/deploy/api.sh"
               - "scripts/migrate.sh"
+              - ".github/workflows/dev.yml"
 
   lint-api:
     needs: detect-api-changes
