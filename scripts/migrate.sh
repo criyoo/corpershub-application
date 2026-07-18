@@ -21,6 +21,11 @@ MIGRATION_TASK_DEFINITION="${NAME_PREFIX}-migration"
 DB_INSTANCE_IDENTIFIER="${NAME_PREFIX}-postgres"
 MIGRATION_LOG_GROUP="/ecs/${NAME_PREFIX}-migration"
 RUN_SEED_DEMO_DATA="${RUN_SEED_DEMO_DATA:-0}"
+SEED_DEMO_DATA_ONLY="${SEED_DEMO_DATA_ONLY:-0}"
+
+if [ "${RUN_SEED_DEMO_DATA}" = "1" ] && [ "${ENVIRONMENT}" != "dev" ]; then
+  fail "seed_demo_data can only be deployed to the development environment."
+fi
 
 echo "Resolving VPC resources (public subnets and app security group)..."
 resolve_public_subnets
@@ -256,6 +261,12 @@ run_task() {
   print_task_logs "${task_arn}"
   fail "Task failed for command: ${command}"
 }
+
+if [ "${SEED_DEMO_DATA_ONLY}" = "1" ]; then
+  echo "Seeding demo data..."
+  run_task "$(app_command "python manage.py seed_demo_data")"
+  exit 0
+fi
 
 if run_task "$(app_command "python manage.py has_pending_migrations")"; then
   echo "No pending migrations."

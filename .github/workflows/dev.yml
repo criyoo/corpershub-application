@@ -45,7 +45,6 @@ jobs:
               - "package.json"
               - "package-lock.json"
               - "turbo.json"
-              - ".github/workflows/dev.yml"
 
 
   lint-web:
@@ -183,7 +182,6 @@ jobs:
               - "scripts/deploy/common.sh"
               - "scripts/deploy/api.sh"
               - "scripts/migrate.sh"
-              - ".github/workflows/dev.yml"
 
   lint-api:
     needs: detect-api-changes
@@ -275,3 +273,30 @@ jobs:
 
       - name: Deploy API
         run: bash scripts/deploy/api.sh dev
+
+
+  deploy-seed-demo-data:
+    needs:
+      - detect-api-changes
+      - deploy-api
+    if: needs.detect-api-changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ env.LINUX_PLATFORM }}
+
+      - name: Debug role ARN
+        run: echo "${{ vars.AWS_DEPLOY_ROLE_ARN }}"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Deploy Seed Demo Data
+        run: RUN_SEED_DEMO_DATA=1 SEED_DEMO_DATA_ONLY=1 bash scripts/migrate.sh dev

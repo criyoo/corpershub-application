@@ -1,8 +1,8 @@
-WORKSPACE ?= dev
+WORKSPACE ?= $(if $(ENVIRONMENT),$(ENVIRONMENT),dev)
 SHELL := /bin/bash
 BASH_CMD := bash
 
-.PHONY: local-api-check local-api-test local-migrate local-seed local-frontend-lint local-frontend-build deploy-api-dev deploy-web-dev invalidate-web-dev migrate-aws-dev
+.PHONY: local-api-check local-api-test local-migrate local-seed local-frontend-lint local-frontend-build api web invalidate migrate admin seed-demo-data deploy
 
 
 # Bear OS Local Environment
@@ -40,5 +40,12 @@ migrate:
 
 admin:
 	@bash scripts/admin.sh $(WORKSPACE)
+
+seed-demo-data:
+	@if [ "$(WORKSPACE)" != "dev" ]; then \
+		echo "seed-demo-data can only run with WORKSPACE=dev."; \
+		exit 1; \
+	fi
+	@RUN_SEED_DEMO_DATA=1 SEED_DEMO_DATA_ONLY=1 bash scripts/migrate.sh $(WORKSPACE)
 
 deploy: api web

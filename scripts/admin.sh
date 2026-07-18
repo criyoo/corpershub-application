@@ -13,22 +13,13 @@ require_cmd aws
 require_cmd python3
 require_cmd tr
 
-
-# Save Password in SSM Paramater Store
-ADMIN_PASSWORD=$(
-  aws_with_auth ssm get-parameter \
-    --region "${AWS_REGION}" \
-    --name "/corpershub/secret/${ENVIRONMENT}/DJANGO_SUPERUSER_PASSWORD" \
-    --with-decryption \
-    --query "Parameter.Value" \
-    --output text
-)
-
 if [ "${ENVIRONMENT}" = "dev" ]; then
   ADMIN_EMAIL="admin@dev.corpershub.ng"
 else
   ADMIN_EMAIL="admin@corpershub.ng"
 fi
+
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 
 ADMIN_START_DB_INSTANCE="${ADMIN_START_DB_INSTANCE:-1}"
 ADMIN_TASK_CONTAINER_NAME="${ADMIN_TASK_CONTAINER_NAME:-migration}"
@@ -36,8 +27,6 @@ ECS_CLUSTER_NAME="${NAME_PREFIX}-cluster"
 ADMIN_TASK_DEFINITION="${NAME_PREFIX}-migration"
 DB_INSTANCE_IDENTIFIER="${NAME_PREFIX}-postgres"
 ADMIN_LOG_GROUP="/ecs/${NAME_PREFIX}-migration"
-
-[ -n "${ADMIN_PASSWORD}" ] || fail "ADMIN_PASSWORD is required."
 
 build_overrides_json() {
   ADMIN_EMAIL="${ADMIN_EMAIL}" \
@@ -52,7 +41,8 @@ command = (
     "from django.contrib.auth import get_user_model; import os; "
     "User = get_user_model(); "
     "email = os.environ['ADMIN_EMAIL']; "
-    "password = os.environ['ADMIN_PASSWORD']; "
+    "password = os.environ.get('ADMIN_PASSWORD') or os.environ.get('DJANGO_SUPERUSER_PASSWORD') or ''; "
+    "assert password, 'ADMIN_PASSWORD or DJANGO_SUPERUSER_PASSWORD is required'; "
     "user, created = User.objects.get_or_create(email=email, defaults={'role': 'admin'}); "
     "user.role = 'admin'; "
     "user.email_verified = True; "
@@ -65,15 +55,19 @@ command = (
     '"'
 )
 
+environment = [
+    {"name": "ADMIN_EMAIL", "value": os.environ["ADMIN_EMAIL"]},
+]
+admin_password = os.environ.get("ADMIN_PASSWORD")
+if admin_password:
+    environment.append({"name": "ADMIN_PASSWORD", "value": admin_password})
+
 print(json.dumps({
     "containerOverrides": [
         {
             "name": os.environ["ADMIN_TASK_CONTAINER_NAME"],
             "command": ["sh", "-lc", command],
-            "environment": [
-                {"name": "ADMIN_EMAIL", "value": os.environ["ADMIN_EMAIL"]},
-                {"name": "ADMIN_PASSWORD", "value": os.environ["ADMIN_PASSWORD"]},
-            ],
+            "environment": environment,
         }
     ]
 }))
@@ -205,5 +199,3 @@ if [ "${task_exit_code}" == "0" ]; then
   print_task_logs "${task_arn}"
   echo "Admin user with email ${ADMIN_EMAIL} created successfully..."
 fi
-
-
