@@ -60,19 +60,16 @@ fi
 
 [ -d "${WEB_DIR}/out" ] || fail "Next export output not found."
 
-aws_with_auth s3 sync "${WEB_DIR}/out/" "s3://${BUCKET_NAME}/" --region "${AWS_REGION}" --delete
-
-aws_with_auth s3 cp "${WEB_DIR}/out/" "s3://${BUCKET_NAME}/" \
+aws_with_auth s3 sync "${WEB_DIR}/out/" "s3://${BUCKET_NAME}/" \
   --region "${AWS_REGION}" \
-  --recursive \
-  --exclude "*" \
-  --include "*.html" \
+  --delete \
+  --exclude "_next/static/*" \
   --cache-control "public,max-age=0,s-maxage=60,must-revalidate"
 
 if [ -d "${WEB_DIR}/out/_next/static" ]; then
-  aws_with_auth s3 cp "${WEB_DIR}/out/_next/static/" "s3://${BUCKET_NAME}/_next/static/" \
+  aws_with_auth s3 sync "${WEB_DIR}/out/_next/static/" "s3://${BUCKET_NAME}/_next/static/" \
     --region "${AWS_REGION}" \
-    --recursive \
+    --delete \
     --cache-control "public,max-age=31536000,immutable"
 fi
 
