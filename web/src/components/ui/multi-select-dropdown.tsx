@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type MultiSelectGroup = {
   label: string;
@@ -55,13 +56,41 @@ export function MultiSelectDropdown({
   onChange,
 }: MultiSelectDropdownProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [panelPosition, setPanelPosition] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
   const selectedValues = normalizeValues(values, exclusiveOption);
   const hasExclusiveSelection = Boolean(
     exclusiveOption && selectedValues.includes(exclusiveOption)
   );
+
+  function updatePanelPosition() {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
+    setPanelPosition({
+      left: rect.left,
+      top: rect.bottom + 8,
+      width: rect.width,
+    });
+  }
+
+  function handleToggle() {
+    if (disabled) {
+      return;
+    }
+    if (!isOpen) {
+      updatePanelPosition();
+    }
+    setIsOpen((current) => !current);
+  }
 
   useEffect(() => {
     if (!isOpen) {
@@ -69,7 +98,11 @@ export function MultiSelectDropdown({
     }
 
     function handleClickOutside(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        !containerRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
@@ -83,12 +116,30 @@ export function MultiSelectDropdown({
   useEffect(() => {
     if (!isOpen) {
       setQuery("");
+      setPanelPosition(null);
       return;
     }
-    if (searchable) {
+    updatePanelPosition();
+  }, [isOpen, searchable]);
+
+  useEffect(() => {
+    if (isOpen && searchable && panelPosition) {
       searchInputRef.current?.focus();
     }
-  }, [isOpen, searchable]);
+  }, [isOpen, panelPosition, searchable]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
+    };
+  }, [isOpen]);
 
   const selectedSummary = (() => {
     if (selectedValues.length === 0) {
@@ -110,11 +161,90 @@ export function MultiSelectDropdown({
         .filter((group) => group.options.length > 0)
     : groups;
 
+  const dropdownPanel =
+    isOpen && panelPosition && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={panelRef}
+            className={clsx(
+              "fixed z-[1000] max-h-80 overflow-y-auto rounded-3xl border border-white/12 bg-[#0A1E15]/95 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl",
+              panelClassName
+            )}
+            style={{
+              left: panelPosition.left,
+              top: panelPosition.top,
+              width: panelPosition.width,
+            }}
+          >
+            {searchable ? (
+              <div className="mb-3">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-sm placeholder:text-white/45 focus:border-white/20 focus:ring-2 focus:ring-lime/25"
+                />
+              </div>
+            ) : null}
+            {visibleGroups.length === 0 ? (
+              <p className="px-3 py-2 text-sm text-mist">{emptyStateText}</p>
+            ) : (
+              <div className="grid gap-3">
+                {visibleGroups.map((group) => (
+                  <div key={group.label} className="grid gap-2">
+                    <p className="px-3 text-[11px] uppercase tracking-[0.22em] text-lime">
+                      {group.label}
+                    </p>
+                    <div className="grid gap-2">
+                      {group.options.map((option) => {
+                        const isSelected = selectedValues.includes(option);
+                        const isOptionDisabled =
+                          disabled || (hasExclusiveSelection && option !== exclusiveOption);
+                        return (
+                          <label
+                            key={option}
+                            className={clsx(
+                              "flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 text-sm transition",
+                              isOptionDisabled
+                                ? "cursor-not-allowed text-white/25"
+                                : "cursor-pointer text-[grey] hover:border-lime/50 hover:bg-white/[0.08] hover:text-white"
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent accent-[#1FB766]"
+                              checked={isSelected}
+                              disabled={isOptionDisabled}
+                              onChange={() =>
+                                onChange(
+                                  normalizeValues(
+                                    toggleSelection(selectedValues, option),
+                                    exclusiveOption
+                                  )
+                                )
+                              }
+                            />
+                            <span>{option}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <div ref={containerRef} className={clsx("relative", className)}>
       <button
         type="button"
-        onClick={() => !disabled && setIsOpen((current) => !current)}
+        onClick={handleToggle}
         disabled={disabled}
         className={clsx(
           "flex min-h-[50px] w-full items-center justify-between rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-left text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-md transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-lime/25 disabled:cursor-not-allowed disabled:border-white/8 disabled:text-slate-400",
@@ -131,75 +261,7 @@ export function MultiSelectDropdown({
           v
         </span>
       </button>
-
-      {isOpen ? (
-        <div
-          className={clsx(
-            "absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 max-h-80 overflow-y-auto rounded-3xl border border-white/12 bg-[#0A1E15]/95 p-3 shadow-[0_24px_60px_rgba(0,0,0,0.38)] backdrop-blur-xl",
-            panelClassName
-          )}
-        >
-          {searchable ? (
-            <div className="mb-3">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={searchPlaceholder}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-sm placeholder:text-white/45 focus:border-white/20 focus:ring-2 focus:ring-lime/25"
-              />
-            </div>
-          ) : null}
-          {visibleGroups.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-mist">{emptyStateText}</p>
-          ) : (
-            <div className="grid gap-3">
-              {visibleGroups.map((group) => (
-                <div key={group.label} className="grid gap-2">
-                  <p className="px-3 text-[11px] uppercase tracking-[0.22em] text-lime">
-                    {group.label}
-                  </p>
-                  <div className="grid gap-2">
-                    {group.options.map((option) => {
-                      const isSelected = selectedValues.includes(option);
-                      const isOptionDisabled =
-                        disabled || (hasExclusiveSelection && option !== exclusiveOption);
-                      return (
-                        <label
-                          key={option}
-                          className={clsx(
-                            "flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 text-sm transition",
-                            isOptionDisabled
-                              ? "cursor-not-allowed text-white/25"
-                              : "cursor-pointer text-[grey] hover:border-lime/50 hover:bg-white/[0.08] hover:text-white"
-                          )}
-                        >
-                          <input
-                            type="checkbox"
-                            className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent accent-[#1FB766]"
-                            checked={isSelected}
-                            disabled={isOptionDisabled}
-                            onChange={() =>
-                              onChange(
-                                normalizeValues(
-                                  toggleSelection(selectedValues, option),
-                                  exclusiveOption
-                                )
-                              )
-                            }
-                          />
-                          <span>{option}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
+      {dropdownPanel}
     </div>
   );
 }

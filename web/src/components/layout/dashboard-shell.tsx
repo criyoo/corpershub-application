@@ -153,10 +153,10 @@ export function DashboardShell({
   const resolvedSidebarBelowBrand =
     sidebarBelowBrand ??
     (shouldShowAutoCorperWelcome ? (
-      <p className="font-display text-2xl text-white">Welcome back <b />{corperFirstName}</p>
+      <p className="font-display text-2xl text-white">Welcome back <b>{corperFirstName}</b></p>
     ) : shouldShowAutoCompanyWelcome ? (
       <p className="font-display text-2xl text-white">
-        Welcome to<b />{companyShortName} Dashboard
+        {companyShortName} Dashboard
       </p>
     ) : null);
 
@@ -409,14 +409,14 @@ export function DashboardShell({
             <div>
               {headerActions ? <div className="mb-4">{headerActions}</div> : null}
               {headerLabel ? <p className="text-xs uppercase tracking-[0.24em] text-lime">{headerLabel}</p> : null}
-            {title ? (
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-3xl text-white">{title}</h1>
-                {titleBadge ? <div>{titleBadge}</div> : null}
-              </div>
-            ) : titleBadge ? (
-              <div>{titleBadge}</div>
-            ) : null}
+              {title ? (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h1 className="font-display text-3xl text-white">{title}</h1>
+                  {titleBadge ? <div>{titleBadge}</div> : null}
+                </div>
+              ) : titleBadge ? (
+                <div>{titleBadge}</div>
+              ) : null}
             </div>
             {headerAside !== undefined ? (
               <div>{headerAside}</div>
@@ -424,11 +424,11 @@ export function DashboardShell({
               <div className="text-sm text-mist">{session?.user.email}</div>
             )}
           </div>
-{corperBanner && !hideBanner ? (
-             <div className={`mb-6 rounded-[24px] border px-5 py-4 text-sm ${corperBanner.className}`}>
-               {corperBanner.message}
-             </div>
-           ) : null}
+          {corperBanner && !hideBanner ? (
+            <div className={`mb-6 rounded-[24px] border px-5 py-4 text-sm ${corperBanner.className}`}>
+              {corperBanner.message}
+            </div>
+          ) : null}
           {children}
         </main>
       </div>

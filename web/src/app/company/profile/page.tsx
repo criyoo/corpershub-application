@@ -447,6 +447,22 @@ function mapProfileToForm(profile: CompanyProfile): CompanyProfileFormValues {
   };
 }
 
+function mergeStoredProfileDraftWithVerificationValues(
+  storedValues: CompanyProfileFormValues,
+  profileValues: CompanyProfileFormValues
+): CompanyProfileFormValues {
+  return {
+    ...storedValues,
+    company_name: profileValues.company_name || storedValues.company_name,
+    company_registration_number:
+      profileValues.company_registration_number || storedValues.company_registration_number,
+    company_registration_date:
+      profileValues.company_registration_date || storedValues.company_registration_date,
+    tax_identification_number:
+      profileValues.tax_identification_number || storedValues.tax_identification_number,
+  };
+}
+
 function buildProfilePayload(formValues: CompanyProfileFormValues): CompanyProfilePayload {
   const organizationType =
     formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION
@@ -628,10 +644,7 @@ function CompanyProfilePageContent() {
   const { data, refetch, loading } = useApiQuery<CompanyProfile>("/companies/me/", protectedQueryEnabled);
   const { data: courseCatalog } = useApiQuery<CourseCatalogResponse>("/common/course-catalog/");
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
-  const [formValues, setFormValues] = useState<CompanyProfileFormValues>(() => {
-    const stored = loadFormValuesFromStorage();
-    return stored ?? EMPTY_FORM_VALUES;
-  });
+  const [formValues, setFormValues] = useState<CompanyProfileFormValues>(EMPTY_FORM_VALUES);
   const [selectedCompanyImage, setSelectedCompanyImage] = useState<File | null>(null);
   const [companyImagePreviewUrl, setCompanyImagePreviewUrl] = useState<string | null>(null);
   const [isProcessingCompanyImage, setIsProcessingCompanyImage] = useState(false);
@@ -642,6 +655,8 @@ function CompanyProfilePageContent() {
   const [isDesiredPostingStateSameAsPreferred, setIsDesiredPostingStateSameAsPreferred] =
     useState(false);
   const companyImageInputRef = useRef<HTMLInputElement>(null);
+  const hasInitializedForm = useRef(false);
+  const shouldPersistDraft = useRef(false);
 
   useEffect(() => {
     if (!data) {
@@ -649,50 +664,43 @@ function CompanyProfilePageContent() {
     }
     const mappedProfileValues = mapProfileToForm(data);
     setProfile(data);
-    const stored = loadFormValuesFromStorage();
-    if (!stored) {
-      setFormValues(mappedProfileValues);
+
+    let nextFormValues: CompanyProfileFormValues | null = null;
+    if (!hasInitializedForm.current) {
+      const stored = loadFormValuesFromStorage();
+      nextFormValues = stored
+        ? mergeStoredProfileDraftWithVerificationValues(stored, mappedProfileValues)
+        : mappedProfileValues;
+      shouldPersistDraft.current = Boolean(stored);
+      hasInitializedForm.current = true;
+    } else if (!shouldPersistDraft.current) {
+      nextFormValues = mappedProfileValues;
+    }
+
+    if (nextFormValues) {
+      setFormValues(nextFormValues);
       setIsCompanyAddressSameAsHeadOffice(
-        shouldSyncTextValues(
-          mappedProfileValues.head_office_address,
-          mappedProfileValues.company_address
-        )
+        shouldSyncTextValues(nextFormValues.head_office_address, nextFormValues.company_address)
       );
       setIsContactNameSameAsDirector(
-        shouldSyncTextValues(mappedProfileValues.directors_name, mappedProfileValues.contact_name)
+        shouldSyncTextValues(nextFormValues.directors_name, nextFormValues.contact_name)
       );
       setIsContactPhoneSameAsDirector(
-        shouldSyncTextValues(
-          mappedProfileValues.director_phone_number,
-          mappedProfileValues.contact_phone
-        )
+        shouldSyncTextValues(nextFormValues.director_phone_number, nextFormValues.contact_phone)
       );
       setIsDesiredPostingStateSameAsPreferred(
         shouldSyncListValues(
-          mappedProfileValues.preferred_deployment_states,
-          mappedProfileValues.desired_posting_states
-        )
-      );
-    } else {
-      setIsCompanyAddressSameAsHeadOffice(
-        shouldSyncTextValues(stored.head_office_address, stored.company_address)
-      );
-      setIsContactNameSameAsDirector(
-        shouldSyncTextValues(stored.directors_name, stored.contact_name)
-      );
-      setIsContactPhoneSameAsDirector(
-        shouldSyncTextValues(stored.director_phone_number, stored.contact_phone)
-      );
-      setIsDesiredPostingStateSameAsPreferred(
-        shouldSyncListValues(
-          stored.preferred_deployment_states,
-          stored.desired_posting_states
+          nextFormValues.preferred_deployment_states,
+          nextFormValues.desired_posting_states
         )
       );
     }
   }, [data]);
 
   useEffect(() => {
+    if (!shouldPersistDraft.current) {
+      return;
+    }
     saveFormValuesToStorage(formValues);
   }, [formValues]);
 
@@ -707,26 +715,6 @@ function CompanyProfilePageContent() {
   const isComplete = profile?.is_complete === true;
   const isEditMode = searchParams.get("edit") === "1";
 
-  useEffect(() => {
-    if (!profile || !session || session.user.role !== "company") {
-      return;
-    }
-
-    if (
-      session.user.profile_completed !== profile.is_complete ||
-      session.user.company_verification_status !== profile.verification_status
-    ) {
-      updateSession({
-        ...session,
-        user: {
-          ...session.user,
-          profile_completed: profile.is_complete,
-          profile_path: profile.is_complete ? "/company/corpers" : "/company/profile",
-          company_verification_status: profile.verification_status,
-        },
-      });
-    }
-  }, [profile, session, updateSession]);
   const canEditProfile = !isComplete || isEditMode;
   const canEditPhoto = canEditProfile;
   const verificationStatusLabel = formatCompanyVerificationStatus(profile?.verification_status);
@@ -750,6 +738,7 @@ function CompanyProfilePageContent() {
     name: Key,
     value: CompanyProfileFormValues[Key]
   ) {
+    shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
       [name]: value,
@@ -767,6 +756,7 @@ function CompanyProfilePageContent() {
           ? normalizeCompanyRegistrationNumber(value)
           : value;
 
+    shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
       [name]: normalizedValue,
@@ -810,6 +800,7 @@ function CompanyProfilePageContent() {
   }
 
   function handlePreferredDeploymentStatesChange(values: string[]) {
+    shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
       preferred_deployment_states: values,
@@ -992,6 +983,7 @@ function CompanyProfilePageContent() {
         body: formData,
       });
 
+      shouldPersistDraft.current = false;
       clearFormValuesFromStorage();
       setProfile(updatedProfile);
       const updatedFormValues = mapProfileToForm(updatedProfile);

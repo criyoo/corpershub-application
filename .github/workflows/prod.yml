@@ -131,13 +131,7 @@ jobs:
         with:
           name: web-build
           path: |
-            web/.next
-            web/public
-            web/package.json
-            web/next.config.*
-            package.json
-            package-lock.json
-            turbo.json
+            web/out
           retention-days: 1
           include-hidden-files: true
 
@@ -164,7 +158,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Web
-        run: bash scripts/deploy/web.sh prod
+        run: INSTALL_DEPS=0 BUILD_WEB=0 bash scripts/deploy/web.sh prod
 
         
   detect-api-changes:

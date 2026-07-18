@@ -132,13 +132,7 @@ jobs:
         with:
           name: web-build
           path: |
-            web/.next
-            web/public
-            web/package.json
-            web/next.config.*
-            package.json
-            package-lock.json
-            turbo.json
+            web/out
           retention-days: 1
           include-hidden-files: true
 
@@ -148,7 +142,7 @@ jobs:
       - build-web
     if: needs.detect-web-changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     environment: development
     steps:
       - uses: actions/checkout@v4
@@ -165,7 +159,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Web
-        run: bash scripts/deploy/web.sh dev
+        run: INSTALL_DEPS=0 BUILD_WEB=0 bash scripts/deploy/web.sh dev
 
 
 
@@ -259,7 +253,7 @@ jobs:
       - test-api
     if: needs.detect-api-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: development
     steps:
       - uses: actions/checkout@v4

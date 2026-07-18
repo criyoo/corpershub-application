@@ -19,12 +19,6 @@ type OverviewStats = {
 
 export default function CompanyDashboardPage() {
   const overview = useApiQuery<OverviewStats>("/common/dashboard-overview/", undefined, 5000);
-  const currentSubscriptionPlan = overview.data?.current_subscription_plan
-    ? formatSubscriptionPlanLabel(overview.data.current_subscription_plan)
-    : "No current plan";
-  const currentSubscriptionStatus = overview.data?.current_subscription_status
-    ? formatSubscriptionStatus(overview.data.current_subscription_status)
-    : undefined;
 
   return (
     <DashboardShell role="company" title="Company overview">
@@ -37,17 +31,11 @@ export default function CompanyDashboardPage() {
             span: "full"
           },
           { label: "Corpers that have shown interest", value: overview.data?.received_interest_count ?? 0 },
-          { label: "Corpers you are interested in", value: overview.data?.sent_interest_count ?? 0 },
+          { label: "Corpers you have shown interest in", value: overview.data?.sent_interest_count ?? 0 },
           { label: "Unread messages", value: overview.data?.unread_message_count ?? 0 },
           { label: "Conversations started", value: overview.data?.conversation_count ?? 0 },
           { label: "Corpers online", value: overview.data?.online_count ?? 0 },
           { label: "Corpers with match score above 50%", value: overview.data?.strong_match_count ?? 0 },
-          {
-            label: "Current subscription plan",
-            value: currentSubscriptionPlan,
-            caption: currentSubscriptionStatus,
-            span: "full"
-          }
         ]}
       />
     </DashboardShell>

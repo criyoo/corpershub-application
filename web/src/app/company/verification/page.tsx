@@ -2,7 +2,7 @@
 
 import { FileText, ShieldCheck, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
@@ -56,11 +56,81 @@ const EMPTY_FORM_VALUES: CompanyVerificationFormValues = {
   tax_identification_number: "",
 };
 
+const COMPANY_VERIFICATION_FORM_STORAGE_KEY = "corpershub.company-verification-form-values";
 const PLACEHOLDER_CLASS_NAME = "placeholder:!text-sm placeholder:!text-[grey]";
 const PLACEHOLDER_OPTION_STYLE = {
   color: "grey",
   fontSize: "0.875rem",
 } as const;
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function loadFormValuesFromStorage(): CompanyVerificationFormValues | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const stored = window.sessionStorage.getItem(COMPANY_VERIFICATION_FORM_STORAGE_KEY);
+    if (!stored) {
+      return null;
+    }
+    const parsedValue = JSON.parse(stored) as unknown;
+    if (!parsedValue || typeof parsedValue !== "object") {
+      return null;
+    }
+    const parsed = parsedValue as Partial<Record<keyof CompanyVerificationFormValues, unknown>>;
+    return {
+      company_name: stringValue(parsed.company_name),
+      company_registration_date: stringValue(parsed.company_registration_date),
+      company_location_state: stringValue(parsed.company_location_state),
+      company_registration_number: normalizeCompanyRegistrationNumber(
+        stringValue(parsed.company_registration_number)
+      ),
+      tax_identification_number: stringValue(parsed.tax_identification_number),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveFormValuesToStorage(values: CompanyVerificationFormValues) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(COMPANY_VERIFICATION_FORM_STORAGE_KEY, JSON.stringify(values));
+  } catch {
+    // Ignore storage errors so the form remains usable in private browsing modes.
+  }
+}
+
+function clearFormValuesFromStorage() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(COMPANY_VERIFICATION_FORM_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors so successful submission is not blocked.
+  }
+}
+
+function mapProfileToFormValues(profile: CompanyVerificationProfile): CompanyVerificationFormValues {
+  return {
+    company_name: profile.company_name ?? "",
+    company_registration_date: profile.company_registration_date ?? "",
+    company_location_state: profile.company_location_state.split(",")[0]?.trim() ?? "",
+    company_registration_number: normalizeCompanyRegistrationNumber(
+      profile.company_registration_number
+    ),
+    tax_identification_number: profile.tax_identification_number ?? "",
+  };
+}
 
 function FieldCard({
   icon: Icon,
@@ -94,24 +164,29 @@ export default function CompanyVerificationPage() {
   const profile = useApiQuery<CompanyVerificationProfile>("/companies/me/verification/", protectedQueryEnabled);
   const [formValues, setFormValues] = useState<CompanyVerificationFormValues>(EMPTY_FORM_VALUES);
   const [isSaving, setIsSaving] = useState(false);
+  const hasInitializedForm = useRef(false);
+  const shouldPersistDraft = useRef(false);
 
   useEffect(() => {
-    if (!profile.data) {
+    if (!profile.data || hasInitializedForm.current) {
       return;
     }
-    setFormValues({
-      company_name: profile.data.company_name ?? "",
-      company_registration_date: profile.data.company_registration_date ?? "",
-      company_location_state: profile.data.company_location_state.split(",")[0]?.trim() ?? "",
-      company_registration_number: normalizeCompanyRegistrationNumber(
-        profile.data.company_registration_number
-      ),
-      tax_identification_number: profile.data.tax_identification_number ?? "",
-    });
+    const storedFormValues = loadFormValuesFromStorage();
+    setFormValues(storedFormValues ?? mapProfileToFormValues(profile.data));
+    shouldPersistDraft.current = Boolean(storedFormValues);
+    hasInitializedForm.current = true;
   }, [profile.data]);
+
+  useEffect(() => {
+    if (!shouldPersistDraft.current) {
+      return;
+    }
+    saveFormValuesToStorage(formValues);
+  }, [formValues]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = event.target;
+    shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
       [name]:
@@ -173,6 +248,8 @@ export default function CompanyVerificationPage() {
           ? "Company verification details updated."
           : "Company verification details saved."
       );
+      shouldPersistDraft.current = false;
+      clearFormValuesFromStorage();
       router.push(updatedProfile.terms_accepted ? "/company/profile" : "/company/profile/terms");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to save verification details.");

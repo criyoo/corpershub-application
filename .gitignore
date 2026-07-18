@@ -28,17 +28,22 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.cache/
 .pyre/
 .hypothesis/
 .tox/
 .nox/
 .coverage
 .coverage.*
+coverage.xml
 htmlcov/
 .venv/
 venv/
 env/
 ENV/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
 /api/celerybeat-schedule*
 /api/staticfiles/
 /api/media/
@@ -58,3 +63,12 @@ out/
 /web/.next/
 /web/out/
 *.tsbuildinfo
+
+# Browser/test runner artifacts
+test-results/
+playwright-report/
+blob-report/
+
+# Hosted platform metadata
+.vercel/
+.netlify/

@@ -17,4 +17,4 @@ fi
 python manage.py makemigrations
 python manage.py migrate
 python manage.py seed_demo_data
-exec gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+exec gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --no-control-socket
