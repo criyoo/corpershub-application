@@ -45,7 +45,6 @@ jobs:
               - "package.json"
               - "package-lock.json"
               - "turbo.json"
-              - ".github/workflows/dev.yml"
 
 
   lint-web:
@@ -187,7 +186,6 @@ jobs:
               - "scripts/deploy/common.sh"
               - "scripts/deploy/api.sh"
               - "scripts/migrate.sh"
-              - ".github/workflows/dev.yml"
 
   lint-api:
     needs: detect-api-changes
