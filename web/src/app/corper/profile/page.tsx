@@ -1,7 +1,8 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Upload } from "lucide-react";
 import { Suspense, type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ import {
   isNigerianUniversity,
   NIGERIAN_UNIVERSITY_GROUPS,
 } from "@/lib/nigerian-universities";
+import { validateNigerianMobileNumber } from "@/lib/nigerian-validation";
 
 type CorperProfile = {
   id: string;
@@ -111,6 +113,14 @@ type FormValues = {
   preferred_organization_experience: string;
 };
 
+type CorperProfileFieldKey =
+  | keyof FormValues
+  | "profile_photo"
+  | "nin_number"
+  | "nysc_callup_number"
+  | "nysc_state_code"
+  | "email";
+
 const EMPTY_FORM_VALUES: FormValues = {
   first_name: "",
   middle_name: "",
@@ -141,6 +151,8 @@ const EMPTY_FORM_VALUES: FormValues = {
 };
 
 const PROFILE_DRAFT_STORAGE_KEY = "corpershub.corper-profile-draft";
+const TEMPORARY_FIELD_ERROR_CLASS_NAME =
+  "border-2 border-red-500 ring-2 ring-red-500/45 focus:border-red-500 focus:ring-red-500/50";
 
 function loadProfileDraftFromStorage(): FormValues | null {
   if (typeof window === "undefined") {
@@ -304,6 +316,26 @@ function mapProfileToForm(profile: CorperProfile): FormValues {
   };
 }
 
+function mergeProfileWithStoredDraft(profileValues: FormValues, storedDraft: FormValues | null): FormValues {
+  if (!storedDraft) {
+    return profileValues;
+  }
+
+  return {
+    ...profileValues,
+    ...storedDraft,
+    first_name: profileValues.first_name,
+    middle_name: profileValues.middle_name,
+    surname: profileValues.surname,
+    date_of_birth: profileValues.date_of_birth,
+    gender: profileValues.gender,
+    state_of_origin: profileValues.state_of_origin,
+    country_of_birth: profileValues.country_of_birth,
+    university_matriculation_number: profileValues.university_matriculation_number,
+    mobile_number: profileValues.mobile_number,
+  };
+}
+
 function getInitials(value: string) {
   const parts = value
     .split(" ")
@@ -320,63 +352,125 @@ function getInitials(value: string) {
 
 function getMissingProfileFields(
   formValues: FormValues,
-  hasProfilePhoto: boolean
+  hasProfilePhoto: boolean,
+  profile: CorperProfile | null
 ) {
-  const missingFields: string[] = [];
+  const missingFields: Array<{ key: CorperProfileFieldKey; label: string }> = [];
 
+  if (!profile?.nin_number.trim()) {
+    missingFields.push({ key: "nin_number", label: "NIN number" });
+  }
+  if (!profile?.nysc_callup_number.trim()) {
+    missingFields.push({ key: "nysc_callup_number", label: "NYSC call-up number" });
+  }
+  if (!profile?.nysc_state_code.trim()) {
+    missingFields.push({ key: "nysc_state_code", label: "NYSC state code" });
+  }
   if (!formValues.first_name.trim()) {
-    missingFields.push("first name");
+    missingFields.push({ key: "first_name", label: "first name" });
+  }
+  if (!formValues.middle_name.trim()) {
+    missingFields.push({ key: "middle_name", label: "middle name" });
   }
   if (!formValues.surname.trim()) {
-    missingFields.push("surname");
+    missingFields.push({ key: "surname", label: "surname" });
   }
   if (!formValues.date_of_birth.trim()) {
-    missingFields.push("date of birth");
+    missingFields.push({ key: "date_of_birth", label: "date of birth" });
   }
   if (!formValues.posting_location_state.trim()) {
-    missingFields.push("posting state");
+    missingFields.push({ key: "posting_location_state", label: "posting state" });
   }
   if (!formValues.batch.trim()) {
-    missingFields.push("batch");
+    missingFields.push({ key: "batch", label: "batch" });
   }
   if (!formValues.stream.trim()) {
-    missingFields.push("stream");
+    missingFields.push({ key: "stream", label: "stream" });
   }
   if (!formValues.field_of_study.trim()) {
-    missingFields.push("field of study");
+    missingFields.push({ key: "field_of_study", label: "field of study" });
   }
   if (!formValues.degree.trim()) {
-    missingFields.push("degree");
+    missingFields.push({ key: "degree", label: "degree" });
   }
   if (!formValues.university.trim()) {
-    missingFields.push("university");
+    missingFields.push({ key: "university", label: "university" });
   }
   if (!formValues.graduation_year.trim()) {
-    missingFields.push("graduation year");
+    missingFields.push({ key: "graduation_year", label: "graduation year" });
   }
   if (!formValues.mobile_number.trim()) {
-    missingFields.push("mobile number");
+    missingFields.push({ key: "mobile_number", label: "mobile number" });
   }
   if (!formValues.technical_skills.trim()) {
-    missingFields.push("technical skills");
+    missingFields.push({ key: "technical_skills", label: "technical skills" });
   }
   if (!formValues.soft_skills.trim()) {
-    missingFields.push("soft skills");
+    missingFields.push({ key: "soft_skills", label: "soft skills" });
   }
   if (!formValues.languages_spoken.trim()) {
-    missingFields.push("languages spoken");
+    missingFields.push({ key: "languages_spoken", label: "languages spoken" });
   }
   if (!formValues.available_date.trim()) {
-    missingFields.push("available date");
+    missingFields.push({ key: "available_date", label: "available date" });
   }
   if (!formValues.bio.trim()) {
-    missingFields.push("bio");
+    missingFields.push({ key: "bio", label: "bio" });
+  }
+  if (formValues.preferred_sector.length === 0) {
+    missingFields.push({ key: "preferred_sector", label: "preferred industry/sector" });
+  }
+  if (formValues.preferred_organization_type.length === 0) {
+    missingFields.push({ key: "preferred_organization_type", label: "preferred organisation type" });
+  }
+  if (!formValues.preferred_placement_type.trim()) {
+    missingFields.push({ key: "preferred_placement_type", label: "preferred placement type" });
+  }
+  if (!formValues.preferred_monthly_allowance.trim()) {
+    missingFields.push({ key: "preferred_monthly_allowance", label: "preferred monthly allowance" });
+  }
+  if (!formValues.preferred_organization_experience.trim()) {
+    missingFields.push({ key: "preferred_organization_experience", label: "preferred organisation experience" });
   }
   if (!hasProfilePhoto) {
-    missingFields.push("profile photo");
+    missingFields.push({ key: "profile_photo", label: "profile photo" });
   }
 
   return missingFields;
+}
+
+function getInvalidProfileFields(formValues: FormValues) {
+  const invalidFields: Array<{ key: CorperProfileFieldKey; label: string; message: string }> = [];
+  const mobileValidation = validateNigerianMobileNumber(
+    formValues.mobile_number,
+    "Mobile number",
+    true,
+    true
+  );
+
+  if (formValues.mobile_number.trim() && mobileValidation.error) {
+    invalidFields.push({
+      key: "mobile_number",
+      label: "mobile number",
+      message: mobileValidation.error,
+    });
+  }
+  if (
+    formValues.graduation_year.trim() &&
+    (
+      !/^\d{4}$/.test(formValues.graduation_year.trim()) ||
+      Number(formValues.graduation_year) < 2000 ||
+      Number(formValues.graduation_year) > CURRENT_YEAR
+    )
+  ) {
+    invalidFields.push({
+      key: "graduation_year",
+      label: "graduation year",
+      message: `Graduation year must be between 2000 and ${CURRENT_YEAR}.`,
+    });
+  }
+
+  return invalidFields;
 }
 
 export default function CorperProfilePage() {
@@ -389,7 +483,6 @@ export default function CorperProfilePage() {
 
 function CorperProfilePageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { hydrated, session, updateSession } = useAuth();
   const protectedQueryEnabled = hydrated && Boolean(session) && session?.user.role === "corper";
   const { data, refetch, loading } = useApiQuery<CorperProfile>("/corpers/me/", protectedQueryEnabled);
@@ -403,10 +496,13 @@ function CorperProfilePageContent() {
   const [selectedProfilePhoto, setSelectedProfilePhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [highlightedFields, setHighlightedFields] = useState<Set<CorperProfileFieldKey>>(
+    () => new Set()
+  );
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const generalLabel = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2"
-  const generalLableTwo = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3"
+  const generalLabel = "grid gap-1.5 text-sm text-white [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-2"
+  const generalLableTwo = "grid gap-1.5 text-sm text-blue-600 [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-3"
 
   useEffect(() => {
     if (!data) {
@@ -414,14 +510,15 @@ function CorperProfilePageContent() {
     }
     setProfile(data);
     const stored = loadProfileDraftFromStorage();
-    if (!stored) {
-      setFormValues(mapProfileToForm(data));
-    }
+    setFormValues(mergeProfileWithStoredDraft(mapProfileToForm(data), stored));
   }, [data]);
 
   useEffect(() => {
+    if (!profile) {
+      return;
+    }
     saveProfileDraftToStorage(formValues);
-  }, [formValues]);
+  }, [formValues, profile]);
 
   useEffect(() => {
     return () => {
@@ -431,19 +528,60 @@ function CorperProfilePageContent() {
     };
   }, [photoPreviewUrl]);
 
+  useEffect(() => {
+    if (highlightedFields.size === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedFields(new Set());
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedFields]);
+
   const documentsVerified =
     profile?.biodata_verification_status === "verified" &&
     profile?.nin_verification_status === "verified" &&
     profile?.nysc_callup_verification_status === "verified" &&
     profile?.nysc_state_code_verification_status === "verified";
   const isComplete = profile?.is_complete ?? false;
-  const isEditMode = searchParams.get("edit") === "1";
   const canEditFullProfile = documentsVerified && !isComplete;
-  const canEditLimitedProfile = documentsVerified && isComplete && isEditMode;
+  const canEditLimitedProfile = false;
   const canEditProfile = canEditFullProfile || canEditLimitedProfile;
-  const canEditGender = canEditFullProfile || canEditLimitedProfile;
   const canEditPostingState = canEditFullProfile || canEditLimitedProfile;
   const canEditPhoto = canEditFullProfile || canEditLimitedProfile;
+  const lockedFieldClassName = "placeholder:!text-gray-400 disabled:!text-gray-400";
+  const editableFieldClassName = "placeholder:!text-gray-400";
+  const verifiedFieldClassName = lockedFieldClassName;
+  const profileFieldClassName = isComplete ? lockedFieldClassName : editableFieldClassName;
+
+  function getProfileSelectClassName(value: string) {
+    if (isComplete) {
+      return lockedFieldClassName;
+    }
+    return value ? "!text-white" : "!text-gray-400";
+  }
+
+  function getProfileDropdownSummaryClassName(value: string | string[]) {
+    const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
+    return isComplete || !hasValue ? "!text-gray-400" : "!text-white";
+  }
+
+  function isProfileFieldHighlighted(field: CorperProfileFieldKey) {
+    return highlightedFields.has(field);
+  }
+
+  function clearHighlightedField(field: CorperProfileFieldKey) {
+    setHighlightedFields((current) => {
+      if (!current.has(field)) {
+        return current;
+      }
+      const nextFields = new Set(current);
+      nextFields.delete(field);
+      return nextFields;
+    });
+  }
   const selectedUniversityOption = formValues.university
     ? isNigerianUniversity(formValues.university)
       ? formValues.university
@@ -525,6 +663,7 @@ function CorperProfilePageContent() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = event.target;
+    clearHighlightedField(name as CorperProfileFieldKey);
     setFormValues((current) => ({
       ...current,
       [name]: name === "mobile_number" ? normalizeCorperMobileInput(value) : value,
@@ -532,6 +671,7 @@ function CorperProfilePageContent() {
   }
 
   function handleUniversityChange(value: string) {
+    clearHighlightedField("university");
     setFormValues((current) => ({
       ...current,
       university:
@@ -544,6 +684,7 @@ function CorperProfilePageContent() {
   }
 
   function handleFieldOfStudyChange(value: string) {
+    clearHighlightedField("field_of_study");
     setFormValues((current) => ({
       ...current,
       field_of_study:
@@ -561,6 +702,7 @@ function CorperProfilePageContent() {
     }
 
     const file = event.target.files?.[0] ?? null;
+    clearHighlightedField("profile_photo");
     if (photoPreviewUrl) {
       URL.revokeObjectURL(photoPreviewUrl);
     }
@@ -585,10 +727,19 @@ function CorperProfilePageContent() {
     if (canEditFullProfile) {
       const missingFields = getMissingProfileFields(
         formValues,
-        Boolean(selectedProfilePhoto || profile.profile_photo)
+        Boolean(selectedProfilePhoto || profile.profile_photo),
+        profile
       );
       if (missingFields.length > 0) {
-        toast.error(`Complete all profile fields before saving: <${missingFields.join(", ")}>.`);
+        setHighlightedFields(new Set(missingFields.map((field) => field.key)));
+        toast.error(`Complete all profile fields before saving: ${missingFields.map((field) => field.label).join(", ")}.`);
+        return;
+      }
+
+      const invalidFields = getInvalidProfileFields(formValues);
+      if (invalidFields.length > 0) {
+        setHighlightedFields(new Set(invalidFields.map((field) => field.key)));
+        toast.error(invalidFields[0].message);
         return;
       }
 
@@ -637,6 +788,7 @@ function CorperProfilePageContent() {
       formData.set("profile_photo", selectedProfilePhoto);
     }
 
+    setHighlightedFields(new Set());
     setIsSaving(true);
     try {
       const updatedProfile = await apiFetch<CorperProfile>("/corpers/me/", {
@@ -687,7 +839,12 @@ function CorperProfilePageContent() {
   }
 
   const headerAside = (
-    <div className="w-full max-w-[204px] rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-xl">
+    <div
+      className={clsx(
+        "w-full max-w-[204px] rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-xl",
+        isProfileFieldHighlighted("profile_photo") && TEMPORARY_FIELD_ERROR_CLASS_NAME
+      )}
+    >
       <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.06]">
         <div className="aspect-square w-full">
           {resolvedPhotoUrl ? (
@@ -766,7 +923,7 @@ function CorperProfilePageContent() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <Card className="grid gap-8">
               <section className="grid gap-4">
                 <h2 className="text-base font-semibold text-white">Corper Verification Status</h2>
@@ -816,6 +973,8 @@ function CorperProfilePageContent() {
                       value={profile.nin_number}
                       disabled
                       placeholder="Approved NIN will appear here"
+                      hasError={isProfileFieldHighlighted("nin_number")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLabel}>
@@ -824,6 +983,8 @@ function CorperProfilePageContent() {
                       value={profile.nysc_callup_number}
                       disabled
                       placeholder="Approved call-up number will appear here"
+                      hasError={isProfileFieldHighlighted("nysc_callup_number")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLabel}>
@@ -832,6 +993,8 @@ function CorperProfilePageContent() {
                       value={profile.nysc_state_code}
                       disabled
                       placeholder="Approved state code will appear here"
+                      hasError={isProfileFieldHighlighted("nysc_state_code")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLabel}>
@@ -843,6 +1006,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled
+                      hasError={isProfileFieldHighlighted("first_name")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLabel}>
@@ -853,6 +1018,8 @@ function CorperProfilePageContent() {
                       value={formValues.middle_name}
                       onChange={handleFieldChange}
                       disabled
+                      hasError={isProfileFieldHighlighted("middle_name")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLabel}>
@@ -864,6 +1031,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled
+                      hasError={isProfileFieldHighlighted("surname")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -875,6 +1044,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled
+                      hasError={isProfileFieldHighlighted("date_of_birth")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -884,6 +1055,8 @@ function CorperProfilePageContent() {
                       value={formValues.gender}
                       onChange={handleFieldChange}
                       disabled
+                      hasError={isProfileFieldHighlighted("gender")}
+                      className={verifiedFieldClassName}
                     >
                       <option value="">Select gender</option>
                       {PROFILE_GENDER_OPTIONS.map((gender) => (
@@ -901,6 +1074,8 @@ function CorperProfilePageContent() {
                       value={formValues.state_of_origin}
                       onChange={handleFieldChange}
                       disabled
+                      hasError={isProfileFieldHighlighted("state_of_origin")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -911,6 +1086,8 @@ function CorperProfilePageContent() {
                       value={formValues.country_of_birth}
                       onChange={handleFieldChange}
                       disabled
+                      hasError={isProfileFieldHighlighted("country_of_birth")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -921,6 +1098,8 @@ function CorperProfilePageContent() {
                       value={formValues.university_matriculation_number}
                       onChange={handleFieldChange}
                       disabled
+                      hasError={isProfileFieldHighlighted("university_matriculation_number")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -931,6 +1110,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditPostingState}
+                      hasError={isProfileFieldHighlighted("posting_location_state")}
+                      className={getProfileSelectClassName(formValues.posting_location_state)}
                     >
                       <option value="">Select posting state</option>
                       {NIGERIAN_STATES.map((state) => (
@@ -948,6 +1129,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditFullProfile}
+                      hasError={isProfileFieldHighlighted("batch")}
+                      className={getProfileSelectClassName(formValues.batch)}
                     >
                       <option value="">Select batch</option>
                       {CORPER_BATCHES.map((batch) => (
@@ -965,6 +1148,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditFullProfile}
+                      hasError={isProfileFieldHighlighted("stream")}
+                      className={getProfileSelectClassName(formValues.stream)}
                     >
                       <option value="">Select stream</option>
                       {CORPER_STREAMS.map((stream) => (
@@ -980,6 +1165,8 @@ function CorperProfilePageContent() {
                       value={profile?.email ?? session?.user.email ?? ""}
                       disabled
                       placeholder="Email address"
+                      hasError={isProfileFieldHighlighted("email")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -992,7 +1179,9 @@ function CorperProfilePageContent() {
                       inputMode="tel"
                       maxLength={14}
                       required
-                      disabled={!canEditFullProfile}
+                      disabled
+                      hasError={isProfileFieldHighlighted("mobile_number")}
+                      className={verifiedFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -1003,6 +1192,8 @@ function CorperProfilePageContent() {
                       displayValue={selectedFieldOfStudyDisplayValue}
                       onChange={handleFieldOfStudyChange}
                       disabled={!canEditFullProfile || courseCatalogLoading}
+                      hasError={isProfileFieldHighlighted("field_of_study")}
+                      summaryClassName={getProfileDropdownSummaryClassName(selectedFieldOfStudyOption)}
                       groups={[
                         ...fieldOfStudyGroups.map((group) => ({
                           label: group.label,
@@ -1028,6 +1219,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditFullProfile}
+                      hasError={isProfileFieldHighlighted("degree")}
+                      className={getProfileSelectClassName(selectedDegreeOption)}
                     >
                       <option value="">Select highest degree</option>
                       {NIGERIAN_DEGREE_GROUPS.map((group) => (
@@ -1051,6 +1244,8 @@ function CorperProfilePageContent() {
                         onChange={handleFieldChange}
                         required
                         disabled={!canEditFullProfile}
+                        hasError={isProfileFieldHighlighted("field_of_study")}
+                        className={profileFieldClassName}
                       />
                     </label>
                   ) : null}
@@ -1062,6 +1257,8 @@ function CorperProfilePageContent() {
                       displayValue={selectedUniversityDisplayValue}
                       onChange={handleUniversityChange}
                       disabled={!canEditFullProfile}
+                      hasError={isProfileFieldHighlighted("university")}
+                      summaryClassName={getProfileDropdownSummaryClassName(selectedUniversityOption)}
                       groups={[
                         ...NIGERIAN_UNIVERSITY_GROUPS.map((group) => ({
                           label: group.label,
@@ -1087,6 +1284,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditFullProfile}
+                      hasError={isProfileFieldHighlighted("graduation_year")}
+                      className={getProfileSelectClassName(formValues.graduation_year)}
                     >
                       <option value="">Select graduation year</option>
                       {GRADUATION_YEAR_OPTIONS.map((year) => (
@@ -1106,6 +1305,8 @@ function CorperProfilePageContent() {
                         onChange={handleFieldChange}
                         required
                         disabled={!canEditFullProfile}
+                        hasError={isProfileFieldHighlighted("university")}
+                        className={profileFieldClassName}
                       />
                     </label>
                   ) : null}
@@ -1118,6 +1319,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("technical_skills")}
+                      className={profileFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -1129,6 +1332,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("soft_skills")}
+                      className={profileFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -1140,6 +1345,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("languages_spoken")}
+                      className={profileFieldClassName}
                     />
                   </label>
                   <label className={generalLableTwo}>
@@ -1151,6 +1358,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("available_date")}
+                      className={profileFieldClassName}
                     />
                   </label>
                   <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45 md:col-span-6">
@@ -1162,6 +1371,8 @@ function CorperProfilePageContent() {
                       onChange={handleFieldChange}
                       required
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("bio")}
+                      className={profileFieldClassName}
                     />
                   </label>
                 </div>
@@ -1171,44 +1382,52 @@ function CorperProfilePageContent() {
                 <h2 className="text-base font-semibold text-white">Preferred Organisation</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="grid gap-1.5">
-                    <span className="text-[10px] uppercase tracking-[0.18em] text-white/45">Prefered Industry/Sector (5 max)</span>
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-white/45">Prefered Industry/Sector (5 max) *</span>
                     <MultiSelectDropdown
                       placeholder="Select preferred industry/sector"
                       values={formValues.preferred_sector}
                       groups={[{ label: "Sectors", options: PREFERRED_SECTOR_OPTIONS }]}
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("preferred_sector")}
+                      summaryClassName={getProfileDropdownSummaryClassName(formValues.preferred_sector)}
                       searchable
                       searchPlaceholder="Search sectors..."
-                      onChange={(values) =>
+                      onChange={(values) => {
+                        clearHighlightedField("preferred_sector");
                         setFormValues((current) => ({
                           ...current,
                           preferred_sector: values.slice(0, 5),
-                        }))
-                      }
+                        }));
+                      }}
                     />
                   </div>
                   <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45">
-                    <span>Preferred Organisation type (3 max)</span>
+                    <span>Preferred Organisation type (3 max) *</span>
                     <MultiSelectDropdown
                       placeholder="Select preferred organisation type"
                       values={formValues.preferred_organization_type}
                       groups={[{ label: "Types", options: PREFERRED_ORGANIZATION_TYPE_OPTIONS }]}
                       disabled={!canEditProfile}
-                      onChange={(values) =>
+                      hasError={isProfileFieldHighlighted("preferred_organization_type")}
+                      summaryClassName={getProfileDropdownSummaryClassName(formValues.preferred_organization_type)}
+                      onChange={(values) => {
+                        clearHighlightedField("preferred_organization_type");
                         setFormValues((current) => ({
                           ...current,
                           preferred_organization_type: values.slice(0, 3),
-                        }))
-                      }
+                        }));
+                      }}
                     />
                   </label>
                   <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45">
-                    <span>Preferred Placement type</span>
+                    <span>Preferred Placement type *</span>
                     <Select
                       name="preferred_placement_type"
                       value={formValues.preferred_placement_type}
                       onChange={handleFieldChange}
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("preferred_placement_type")}
+                      className={getProfileSelectClassName(formValues.preferred_placement_type)}
                     >
                       <option value="">Select preferred placement type</option>
                       {PREFERRED_PLACEMENT_TYPE_OPTIONS.map((option) => (
@@ -1219,12 +1438,14 @@ function CorperProfilePageContent() {
                     </Select>
                   </label>
                   <label className="grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45">
-                    <span>Preferred Monthly allowance</span>
+                    <span>Preferred Monthly allowance *</span>
                     <Select
                       name="preferred_monthly_allowance"
                       value={formValues.preferred_monthly_allowance}
                       onChange={handleFieldChange}
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("preferred_monthly_allowance")}
+                      className={getProfileSelectClassName(formValues.preferred_monthly_allowance)}
                     >
                       <option value="">Select preferred monthly allowance</option>
                       {PREFERRED_MONTHLY_ALLOWANCE_OPTIONS.map((option) => (
@@ -1235,13 +1456,15 @@ function CorperProfilePageContent() {
                     </Select>
                   </label>
                   <label className={generalLabel}>
-                    <span>Experience</span>
+                    <span>Experience *</span>
                     <Textarea
                       name="preferred_organization_experience"
                       placeholder="Describe your experience"
                       value={formValues.preferred_organization_experience}
                       onChange={handleFieldChange}
                       disabled={!canEditProfile}
+                      hasError={isProfileFieldHighlighted("preferred_organization_experience")}
+                      className={profileFieldClassName}
                     />
                   </label>
                 </div>

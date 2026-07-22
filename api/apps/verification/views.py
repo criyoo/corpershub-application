@@ -49,7 +49,6 @@ _KNOWN_HUMANIZED_ERROR_MESSAGES = tuple(
     dict.fromkeys(
         [
             *_DUPLICATE_FIELD_ERROR_MESSAGES.values(),
-            "Your biodata has already been verified.",
             "Your NIN has already been verified.",
             "Your NYSC call-up number has already been verified.",
             "Your NYSC state code has already been verified.",
@@ -259,17 +258,17 @@ class VerificationAttemptListCreateAPIView(generics.ListCreateAPIView):
             verification_type == VerificationAttempt.VerificationType.BIODATA
             and corper.biodata_verification_status == CorperProfile.SensitiveStatus.VERIFIED
         ):
-            error_message = "Your biodata has already been verified."
-            _record_failed_attempt(
-                corper=corper,
-                verification_type=verification_type,
-                submitted_value=university_matriculation_number,
-                error_message=error_message,
+            latest_attempt = (
+                corper.verification_attempts.filter(
+                    verification_type=VerificationAttempt.VerificationType.BIODATA
+                )
+                .exclude(status=VerificationAttempt.Status.FAILED)
+                .order_by("-created_at")
+                .first()
             )
-            return Response(
-                {"detail": error_message},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            if latest_attempt:
+                return Response(VerificationAttemptSerializer(latest_attempt).data, status=status.HTTP_200_OK)
+            return Response({"detail": "Biodata verification is complete."}, status=status.HTTP_200_OK)
 
         if verification_type == VerificationAttempt.VerificationType.BIODATA and deleted_account_biodata_exists(
             full_name=full_name,
@@ -697,6 +696,9 @@ class VerificationReviewAPIView(APIView):
         if attempt.verification_type == VerificationAttempt.VerificationType.NIN:
             corper.nin_verification_status = mapped_status
             fields_to_update.append("nin_verification_status")
+            if attempt.status == VerificationAttempt.Status.APPROVED:
+                corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
+                fields_to_update.append("biodata_verification_status")
         elif attempt.verification_type == VerificationAttempt.VerificationType.BIODATA:
             corper.biodata_verification_status = mapped_status
             fields_to_update.append("biodata_verification_status")

@@ -92,7 +92,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "32345678901"
         corper.nysc_callup_number = "NYSC/BEN/2026/199999"
-        corper.nysc_state_code = "NYSC/BE/26A/0997"
+        corper.nysc_state_code = "NYSC/BE/26A/00997"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -165,7 +165,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "42345678901"
         corper.nysc_callup_number = "NYSC/BEN/2026/299999"
-        corper.nysc_state_code = "NYSC/BE/26A/0996"
+        corper.nysc_state_code = "NYSC/BE/26A/00996"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -228,7 +228,7 @@ class CorperProfileAPITests(APITestCase):
         corper.graduation_year = 2026
         corper.mobile_number = "08031234567"
         corper.nysc_callup_number = "NYSC/BEN/2026/111111"
-        corper.nysc_state_code = "NYSC/BE/26A/0456"
+        corper.nysc_state_code = "NYSC/BE/26A/00456"
         corper.nin_number = "12345678901"
         corper.skill = "Operations"
         corper.bio = "Existing bio."
@@ -272,7 +272,7 @@ class CorperProfileAPITests(APITestCase):
         corper.graduation_year = 2026
         corper.mobile_number = "08031234567"
         corper.nysc_callup_number = "NYSC/BEN/2026/111111"
-        corper.nysc_state_code = "NYSC/BE/26A/0456"
+        corper.nysc_state_code = "NYSC/BE/26A/00456"
         corper.nin_number = "12345678901"
         corper.skill = "Operations"
         corper.bio = "Existing bio."
@@ -340,7 +340,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "12345678901"
         corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        corper.nysc_state_code = "NYSC/BE/27A/0123"
+        corper.nysc_state_code = "NYSC/BE/27A/01234"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -370,7 +370,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["nin_number"], "12345678901")
         self.assertEqual(response.data["nysc_callup_number"], "NYSC/BEN/2027/123456")
-        self.assertEqual(response.data["nysc_state_code"], "NYSC/BE/27A/0123")
+        self.assertEqual(response.data["nysc_state_code"], "NYSC/BE/27A/01234")
 
     def test_biodata_verification_submission_stays_pending_until_review(self):
         response = self.client.post(
@@ -395,6 +395,34 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.gender, "female")
         self.assertEqual(corper.mobile_number, "+2348099446062")
         self.assertEqual(corper.university_matriculation_number, "UNILAG/CSC/001")
+
+    def test_verified_biodata_submission_returns_existing_attempt_without_failed_error(self):
+        corper = ensure_corper_profile(self.corper_user)
+        attempt = VerificationAttempt.objects.create(
+            corper=corper,
+            verification_type=VerificationAttempt.VerificationType.BIODATA,
+            status=VerificationAttempt.Status.APPROVED,
+            submitted_value_masked="Ada Grace Lovelace | 2001-06-15",
+            metadata={"submitted": True},
+        )
+        corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
+        corper.save(update_fields=["biodata_verification_status", "updated_at"])
+
+        response = self.client.post(
+            "/api/verification/attempts/",
+            self.biodata_submission_payload(),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], str(attempt.id))
+        self.assertFalse(
+            VerificationAttempt.objects.filter(
+                corper=corper,
+                verification_type=VerificationAttempt.VerificationType.BIODATA,
+                status=VerificationAttempt.Status.FAILED,
+            ).exists()
+        )
 
     def test_biodata_verification_submission_rejects_invalid_matriculation_number(self):
         response = self.client.post(
@@ -628,7 +656,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "nysc/be/27a/0123",
+                "submitted_value": "nysc/lg/26b/72673",
                 "document": state_code_document,
             },
             format="multipart",
@@ -642,14 +670,19 @@ class CorperProfileAPITests(APITestCase):
         corper = ensure_corper_profile(self.corper_user)
         self.assertEqual(corper.nin_last4, "8901")
         self.assertEqual(corper.masked_callup_number, "NY****************56")
-        self.assertEqual(corper.masked_state_code, "NYSC**********23")
+        self.assertEqual(corper.masked_state_code, "NYSC***********73")
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
         self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
         self.assertEqual(corper.nysc_callup_verification_status, CorperProfile.SensitiveStatus.PENDING)
         self.assertEqual(corper.nysc_state_code_verification_status, CorperProfile.SensitiveStatus.PENDING)
         self.assertEqual(corper.nin_number, "12345678901")
         self.assertEqual(corper.nysc_callup_number, "NYSC/BEN/2027/123456")
-        self.assertEqual(corper.nysc_state_code, "NYSC/BE/27A/0123")
+        self.assertEqual(corper.nysc_state_code, "NYSC/LG/26B/72673")
+        biodata_attempt = VerificationAttempt.objects.get(
+            corper=corper,
+            verification_type=VerificationAttempt.VerificationType.BIODATA,
+        )
+        self.assertEqual(biodata_attempt.status, VerificationAttempt.Status.APPROVED)
         dikript_lookup_mock.assert_called_once()
 
     def test_callup_and_state_code_submission_require_uploaded_documents(self):
@@ -665,7 +698,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "NYSC/BE/27A/0123",
+                "submitted_value": "NYSC/BE/27A/01234",
             },
             format="json",
         )
@@ -700,7 +733,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "NYSC/BE/27A/0123",
+                "submitted_value": "NYSC/BE/27A/01234",
                 "document": state_code_document,
             },
             format="multipart",
@@ -847,7 +880,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.data["submitted_value"][0],
-            "NYSC State Code must match the format NYSC/AB/23A/0123.",
+            "NYSC State Code must match the format NYSC/LG/26B/72673.",
         )
         attempt = VerificationAttempt.objects.get(
             corper__user=self.corper_user,
@@ -856,7 +889,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(attempt.status, VerificationAttempt.Status.FAILED)
         self.assertEqual(
             attempt.review_note,
-            "NYSC State Code must match the format NYSC/AB/23A/0123.",
+            "NYSC State Code must match the format NYSC/LG/26B/72673.",
         )
 
     def test_verification_submission_records_failed_attempt_when_profile_update_fails(self):
@@ -962,6 +995,7 @@ class CorperProfileAPITests(APITestCase):
         corper = ensure_corper_profile(self.corper_user)
         self.assertEqual(corper.nin_number, "91231161558")
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
 
     @override_settings(
         DIKRIPT_API_BASE_URL="https://api.dikript.com",
@@ -1022,6 +1056,7 @@ class CorperProfileAPITests(APITestCase):
         corper = ensure_corper_profile(self.corper_user)
         self.assertEqual(corper.nin_number, "91231161558")
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
 
     @override_settings(
         DIKRIPT_API_BASE_URL="https://api.dikript.com",
@@ -1079,6 +1114,7 @@ class CorperProfileAPITests(APITestCase):
         corper = ensure_corper_profile(self.corper_user)
         self.assertEqual(corper.nin_number, "91231161558")
         self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
 
     def test_profile_update_rejects_invalid_mobile_number(self):
         corper = ensure_corper_profile(self.corper_user)
@@ -1088,7 +1124,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "12345678901"
         corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        corper.nysc_state_code = "NYSC/BE/27A/0123"
+        corper.nysc_state_code = "NYSC/BE/27A/01234"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -1142,7 +1178,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "12345678901"
         corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        corper.nysc_state_code = "NYSC/BE/27A/0123"
+        corper.nysc_state_code = "NYSC/BE/27A/01234"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -1192,7 +1228,7 @@ class CorperProfileAPITests(APITestCase):
         corper = ensure_corper_profile(self.corper_user)
         corper.nin_number = "12345678901"
         corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        corper.nysc_state_code = "NYSC/BE/27A/0123"
+        corper.nysc_state_code = "NYSC/BE/27A/01234"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -1234,7 +1270,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "NYSC/AB/28A/0456",
+                "submitted_value": "NYSC/AB/28A/04567",
                 "document": SimpleUploadedFile(
                     "state-code-card.pdf",
                     b"%PDF-1.4 fake state code",
@@ -1291,7 +1327,7 @@ class CorperProfileAPITests(APITestCase):
         other_corper = ensure_corper_profile(other_user)
         other_corper.nin_number = "12345678901"
         other_corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        other_corper.nysc_state_code = "NYSC/BE/27A/0123"
+        other_corper.nysc_state_code = "NYSC/BE/27A/01234"
         other_corper.save(
             update_fields=[
                 "nin_number",
@@ -1337,7 +1373,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "NYSC/BE/27A/0123",
+                "submitted_value": "NYSC/BE/27A/01234",
                 "document": SimpleUploadedFile(
                     "state-code-card.pdf",
                     b"%PDF-1.4 fake state code",
@@ -1370,7 +1406,7 @@ class CorperProfileAPITests(APITestCase):
     def test_rejected_nysc_documents_can_be_resubmitted_with_the_same_values(self):
         corper = ensure_corper_profile(self.corper_user)
         corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        corper.nysc_state_code = "NYSC/BE/27A/0123"
+        corper.nysc_state_code = "NYSC/BE/27A/01234"
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.REJECTED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.REJECTED
         corper.save(
@@ -1400,7 +1436,7 @@ class CorperProfileAPITests(APITestCase):
             "/api/verification/attempts/",
             {
                 "verification_type": VerificationAttempt.VerificationType.STATE_CODE,
-                "submitted_value": "NYSC/BE/27A/0123",
+                "submitted_value": "NYSC/BE/27A/01234",
                 "document": SimpleUploadedFile(
                     "state-code-card.pdf",
                     b"%PDF-1.4 fake state code",
@@ -1434,7 +1470,7 @@ class CorperProfileAPITests(APITestCase):
         corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nin_number = "52345678901"
         corper.nysc_callup_number = "NYSC/BEN/2026/399999"
-        corper.nysc_state_code = "NYSC/BE/26A/0995"
+        corper.nysc_state_code = "NYSC/BE/26A/00995"
         corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_callup_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         corper.nysc_state_code_verification_status = CorperProfile.SensitiveStatus.VERIFIED

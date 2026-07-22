@@ -322,6 +322,10 @@ function getLegalAgreementErrorMessage(error: unknown): string {
   return GENERIC_CORPER_VERIFICATION_ERROR;
 }
 
+function isAlreadyVerifiedVerificationError(error: unknown) {
+  return /already been verified/i.test(getLegalAgreementErrorMessage(error));
+}
+
 export function LegalAgreementPage({
   role,
   documents,
@@ -404,22 +408,37 @@ export function LegalAgreementPage({
       : config.allowSubmitWithoutProfileCompletion || Boolean(profile.data?.profile_fields_complete);
 
   async function submitCorperVerificationDraft() {
-    if (corperDocumentsAlreadyVerified(profile.data)) {
+    const latestProfile = await apiFetch<TermsProfile>(config.endpoint);
+
+    if (corperDocumentsAlreadyVerified(latestProfile)) {
       return;
     }
 
     const hasStoredBiodataVerification = hasExistingCorperVerificationStatus(
-      profile.data?.biodata_verification_status
+      latestProfile.biodata_verification_status
     );
     const hasStoredNinVerification = hasExistingCorperVerificationStatus(
-      profile.data?.nin_verification_status
+      latestProfile.nin_verification_status
     );
     const hasStoredCallupVerification =
-      hasExistingCorperVerificationStatus(profile.data?.nysc_callup_verification_status) ||
-      Boolean(profile.data?.nysc_callup_document);
+      hasExistingCorperVerificationStatus(latestProfile.nysc_callup_verification_status) ||
+      Boolean(latestProfile.nysc_callup_document);
     const hasStoredStateCodeVerification =
-      hasExistingCorperVerificationStatus(profile.data?.nysc_state_code_verification_status) ||
-      Boolean(profile.data?.nysc_state_code_document);
+      hasExistingCorperVerificationStatus(latestProfile.nysc_state_code_verification_status) ||
+      Boolean(latestProfile.nysc_state_code_document);
+
+    async function submitVerificationAttempt(
+      options: Parameters<typeof apiFetch>[1]
+    ) {
+      try {
+        await apiFetch("/verification/attempts/", options);
+      } catch (error) {
+        if (isAlreadyVerifiedVerificationError(error)) {
+          return;
+        }
+        throw error;
+      }
+    }
 
     if (
       !hasStoredCallupVerification &&
@@ -435,7 +454,7 @@ export function LegalAgreementPage({
     }
 
     if (!hasStoredBiodataVerification) {
-      await apiFetch("/verification/attempts/", {
+      await submitVerificationAttempt({
         method: "POST",
         body: JSON.stringify({
           verification_type: "biodata",
@@ -453,7 +472,7 @@ export function LegalAgreementPage({
     }
 
     if (!hasStoredNinVerification) {
-      await apiFetch("/verification/attempts/", {
+      await submitVerificationAttempt({
         method: "POST",
         body: JSON.stringify({
           verification_type: "nin",
@@ -467,7 +486,7 @@ export function LegalAgreementPage({
       callupFormData.set("verification_type", "callup");
       callupFormData.set("submitted_value", verificationDraft.callup.submitted_value);
       callupFormData.set("document", verificationDraft.callup.document);
-      await apiFetch("/verification/attempts/", {
+      await submitVerificationAttempt({
         method: "POST",
         formData: true,
         body: callupFormData,
@@ -479,7 +498,7 @@ export function LegalAgreementPage({
       stateCodeFormData.set("verification_type", "state_code");
       stateCodeFormData.set("submitted_value", verificationDraft.state_code.submitted_value);
       stateCodeFormData.set("document", verificationDraft.state_code.document);
-      await apiFetch("/verification/attempts/", {
+      await submitVerificationAttempt({
         method: "POST",
         formData: true,
         body: stateCodeFormData,
@@ -534,6 +553,7 @@ export function LegalAgreementPage({
       router.replace(successRedirect);
     } catch (error) {
       if (role === "corper") {
+        void profile.refetch();
         toast.error(getLegalAgreementErrorMessage(error), { duration: 6000 });
         return;
       }

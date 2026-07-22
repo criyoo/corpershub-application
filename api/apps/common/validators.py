@@ -56,49 +56,8 @@ NIGERIAN_MOBILE_PREFIXES = frozenset(
     }
 )
 NYSC_CALLUP_NUMBER_RE = re.compile(r"^NYSC/[A-Z]{3}/\d{4}/\d{4,6}$")
-NYSC_STATE_CODE_RE = re.compile(r"^NYSC/[A-Z]{2}/\d{2}[A-Z]/\d{4,6}$")
+NYSC_STATE_CODE_RE = re.compile(r"^NYSC/[A-Z]{2}/\d{2}[A-C]/\d{5,6}$")
 UNIVERSITY_MATRICULATION_NUMBER_RE = re.compile(r"^[A-Z0-9/]{8,16}$")
-NYSC_STATE_CODE_PREFIXES = frozenset(
-    {
-        "AB",
-        "AD",
-        "AK",
-        "AN",
-        "BA",
-        "BE",
-        "BO",
-        "BY",
-        "CR",
-        "DT",
-        "EB",
-        "ED",
-        "EK",
-        "EN",
-        "FC",
-        "GM",
-        "IM",
-        "JG",
-        "KB",
-        "KD",
-        "KG",
-        "KN",
-        "KT",
-        "KW",
-        "LA",
-        "NG",
-        "NS",
-        "OD",
-        "OG",
-        "OS",
-        "OY",
-        "PL",
-        "RV",
-        "SK",
-        "TR",
-        "YB",
-        "ZM",
-    }
-)
 
 
 def normalize_mobile_number(value: str | None) -> str:
@@ -196,11 +155,7 @@ def validate_nysc_state_code(value: str | None) -> str:
     if not state_code:
         raise serializers.ValidationError("NYSC State Code is required.")
     if not NYSC_STATE_CODE_RE.fullmatch(state_code):
-        raise serializers.ValidationError("NYSC State Code must match the format NYSC/AB/23A/0123.")
-
-    parts = state_code.split("/")
-    if len(parts) != 4 or parts[1] not in NYSC_STATE_CODE_PREFIXES:
-        raise serializers.ValidationError("Enter a valid NYSC State Code using an official 2-letter state code.")
+        raise serializers.ValidationError("NYSC State Code must match the format NYSC/LG/26B/72673.")
 
     return state_code
 

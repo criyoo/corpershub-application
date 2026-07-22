@@ -32,7 +32,7 @@ class VerificationAdminTests(TestCase):
             university="University of Lagos",
             mobile_number="08031234567",
             nysc_callup_number="NYSC/BEN/2027/123456",
-            nysc_state_code="NYSC/BE/27A/0123",
+            nysc_state_code="NYSC/BE/27A/01234",
             skill="Design",
         )
         self.request = RequestFactory().get("/")
@@ -110,6 +110,28 @@ class VerificationAdminTests(TestCase):
             verification.verification_status,
             CorperProfile.VerificationStatus.REJECTED,
         )
+
+    def test_approved_nin_attempt_marks_biodata_verified(self):
+        biodata_attempt = VerificationAttempt.objects.create(
+            corper=self.corper,
+            verification_type=VerificationAttempt.VerificationType.BIODATA,
+            submitted_value_masked="Ad*********ce | 2001-06-15",
+        )
+        nin_attempt = VerificationAttempt.objects.create(
+            corper=self.corper,
+            verification_type=VerificationAttempt.VerificationType.NIN,
+            submitted_value_masked="12*******01",
+        )
+
+        nin_attempt.status = VerificationAttempt.Status.APPROVED
+        nin_attempt.save(update_fields=["status", "updated_at"])
+
+        self.corper.refresh_from_db()
+        biodata_attempt.refresh_from_db()
+
+        self.assertEqual(self.corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(self.corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(biodata_attempt.status, VerificationAttempt.Status.APPROVED)
 
     def test_verified_documents_auto_mark_overall_verification_as_verified(self):
         verification = CorperVerification.objects.get(pk=self.corper.pk)

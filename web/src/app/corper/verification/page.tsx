@@ -87,10 +87,108 @@ type CorperProfile = {
 
 type DocumentVerificationType = "biodata" | "nin" | "callup" | "state_code";
 type UploadableDocumentVerificationType = "callup" | "state_code";
+type VerificationDraftFieldKey =
+  | "first_name"
+  | "middle_name"
+  | "surname"
+  | "date_of_birth"
+  | "gender"
+  | "mobile_number"
+  | "state_of_origin"
+  | "country_of_birth"
+  | "university_matriculation_number"
+  | "nin"
+  | "callup"
+  | "callup_document"
+  | "state_code"
+  | "state_code_document";
 type NormalizedVerificationDraftResult =
-  | { error: string }
+  | { error: string; fields?: VerificationDraftFieldKey[] }
   | { draft: CorperVerificationDraft };
 const VERIFICATION_DRAFT_STORAGE_KEY = "corpershub.corper-verification-draft";
+const TEMPORARY_MISSING_FIELD_CLASS_NAME =
+  "border-2 border-red-500 ring-2 ring-red-500/45 focus:border-red-500 focus:ring-red-500/50";
+
+const REQUIRED_VERIFICATION_DRAFT_FIELDS: Array<{
+  key: VerificationDraftFieldKey;
+  label: string;
+  isMissing: (draft: CorperVerificationDraft) => boolean;
+}> = [
+    {
+      key: "first_name",
+      label: "First name",
+      isMissing: (draft) => !draft.biodata.first_name.trim(),
+    },
+    {
+      key: "middle_name",
+      label: "Middle name",
+      isMissing: (draft) => !draft.biodata.middle_name.trim(),
+    },
+    {
+      key: "surname",
+      label: "Surname",
+      isMissing: (draft) => !draft.biodata.surname.trim(),
+    },
+    {
+      key: "date_of_birth",
+      label: "Date of birth",
+      isMissing: (draft) => !draft.biodata.date_of_birth,
+    },
+    {
+      key: "state_of_origin",
+      label: "State of origin",
+      isMissing: (draft) => !draft.biodata.state_of_origin.trim(),
+    },
+    {
+      key: "country_of_birth",
+      label: "Country of birth",
+      isMissing: (draft) => !draft.biodata.country_of_birth.trim(),
+    },
+    {
+      key: "gender",
+      label: "Gender",
+      isMissing: (draft) => !draft.biodata.gender.trim(),
+    },
+    {
+      key: "mobile_number",
+      label: "Mobile number",
+      isMissing: (draft) => !draft.biodata.mobile_number.trim(),
+    },
+    {
+      key: "university_matriculation_number",
+      label: "University matriculation number",
+      isMissing: (draft) => !draft.biodata.university_matriculation_number.trim(),
+    },
+    {
+      key: "nin",
+      label: "NIN",
+      isMissing: (draft) => !draft.nin.submitted_value.trim(),
+    },
+    {
+      key: "callup",
+      label: "NYSC call-up number",
+      isMissing: (draft) => !draft.callup.submitted_value.trim(),
+    },
+    {
+      key: "callup_document",
+      label: "NYSC call-up document",
+      isMissing: (draft) =>
+        (!(draft.callup.document instanceof File) || draft.callup.document.size === 0) &&
+        !draft.callup.document_name.trim(),
+    },
+    {
+      key: "state_code",
+      label: "NYSC state code",
+      isMissing: (draft) => !draft.state_code.submitted_value.trim(),
+    },
+    {
+      key: "state_code_document",
+      label: "NYSC state code document",
+      isMissing: (draft) =>
+        (!(draft.state_code.document instanceof File) || draft.state_code.document.size === 0) &&
+        !draft.state_code.document_name.trim(),
+    },
+  ];
 
 const verificationDocuments = [
   {
@@ -119,7 +217,7 @@ const verificationDocuments = [
     type: "state_code" as const,
     label: "NYSC state code",
     title: "NYSC State Code",
-    placeholder: "e.g NYSC/EN/25B/45678",
+    placeholder: "e.g NYSC/LG/26B/72673",
     maxLength: 18,
     icon: ShieldCheck,
   },
@@ -222,6 +320,19 @@ function getDocumentStatus(profile: CorperProfile | null, verificationType: Docu
         : profile?.nysc_state_code_verification_status ?? "unsubmitted";
 }
 
+function isDocumentVerificationType(value: string): value is DocumentVerificationType {
+  return value === "biodata" || value === "nin" || value === "callup" || value === "state_code";
+}
+
+function getAttemptDisplayStatus(profile: CorperProfile | null, attempt: Attempt) {
+  if (!isDocumentVerificationType(attempt.verification_type) || normalizeStatus(attempt.status) !== "pending") {
+    return attempt.status;
+  }
+
+  const documentStatus = getDocumentStatus(profile, attempt.verification_type);
+  return normalizeStatus(documentStatus) === "verified" ? documentStatus : attempt.status;
+}
+
 function getStoredMaskedValue(profile: CorperProfile | null, verificationType: DocumentVerificationType) {
   if (verificationType === "biodata") {
     if (!profile?.full_name || !profile?.date_of_birth) {
@@ -322,24 +433,54 @@ function getSubmissionButtonState(status: string, isSubmitting: boolean) {
   }
 }
 
-function getHeroCopy(completedDocumentsCount: number, documentsVerified: boolean, isComplete: boolean | undefined) {
-  if (documentsVerified && isComplete) {
+function formatVerificationDocumentLabels(documents: typeof verificationDocuments) {
+  if (documents.length === 0) {
+    return "";
+  }
+  if (documents.length === 1) {
+    return documents[0].label;
+  }
+  if (documents.length === 2) {
+    return `${documents[0].label} and ${documents[1].label}`;
+  }
+
+  return `${documents.slice(0, -1).map((document) => document.label).join(", ")}, and ${documents[documents.length - 1].label
+    }`;
+}
+
+function getHeroCopy(profile: CorperProfile | null) {
+  const verifiedDocuments = verificationDocuments.filter(
+    (document) => normalizeStatus(getDocumentStatus(profile, document.type)) === "verified"
+  );
+  const submittedDocuments = verificationDocuments.filter(
+    (document) => normalizeStatus(getDocumentStatus(profile, document.type)) !== "unsubmitted"
+  );
+  const documentsNeedingVerification = verificationDocuments.filter(
+    (document) => normalizeStatus(getDocumentStatus(profile, document.type)) !== "verified"
+  );
+
+  if (verifiedDocuments.length === verificationDocuments.length) {
     return {
-      title: "Your records are verified",
+      title: "All records are verified",
       description: "Your biodata, NIN, NYSC call-up number, and NYSC state code are approved.",
     };
   }
 
-  if (completedDocumentsCount === verificationDocuments.length - 1) {
+  if (submittedDocuments.length === 0) {
     return {
-      title: "One final document unlocks the next step",
-      description: "Submit the remaining verification card to complete identity verification and move on to full profile setup.",
+      title: "Corper identity verification",
+      description: "Submit all verification data and wait for approval.",
     };
   }
 
+  const remainingCount = documentsNeedingVerification.length;
+  const remainingLabel = remainingCount === 1 ? "record needs" : "records need";
+
   return {
-    title: "Corper identity verification",
-    description: "Submit your biodata, NIN, NYSC call-up number, and NYSC state code for verification.",
+    title: `${verifiedDocuments.length} of ${verificationDocuments.length} records are verified`,
+    description: `${remainingCount} ${remainingLabel} verification: ${formatVerificationDocumentLabels(
+      documentsNeedingVerification
+    )}.`,
   };
 }
 
@@ -362,44 +503,8 @@ function buildDraftFullName(draft: CorperVerificationDraft["biodata"]) {
     .join(" ");
 }
 
-function formatSegmentedValue(rawValue: string, segmentLengths: number[]) {
-  const uppercaseValue = rawValue.toUpperCase();
-  const compact = uppercaseValue.replace(/[^A-Z0-9]/g, "");
-  if (!compact) {
-    return "";
-  }
-
-  const segments: string[] = [];
-  let cursor = 0;
-  for (const length of segmentLengths) {
-    if (cursor >= compact.length) {
-      break;
-    }
-    segments.push(compact.slice(cursor, cursor + length));
-    cursor += length;
-  }
-  const formattedValue = segments.join("/");
-  const endsWithSeparator = uppercaseValue.endsWith("/");
-  const completedSegmentCount = segments.filter((segment, index) => segment.length === segmentLengths[index]).length;
-  const typedSeparatorCount = uppercaseValue.split("/").length - 1;
-
-  if (
-    endsWithSeparator &&
-    typedSeparatorCount >= completedSegmentCount &&
-    completedSegmentCount < segmentLengths.length
-  ) {
-    return `${formattedValue}/`;
-  }
-
-  return formattedValue;
-}
-
-function formatNyscCallupInput(value: string) {
-  return formatSegmentedValue(normalizeNyscCallupNumber(value), [4, 3, 4, 6]);
-}
-
-function formatNyscStateCodeInput(value: string) {
-  return formatSegmentedValue(normalizeNyscStateCode(value), [4, 2, 3, 6]);
+function getMissingVerificationDraftFields(draft: CorperVerificationDraft) {
+  return REQUIRED_VERIFICATION_DRAFT_FIELDS.filter((field) => field.isMissing(draft));
 }
 
 function persistVerificationDraftForTerms(draft: CorperVerificationDraft, ownerEmail: string | null) {
@@ -447,16 +552,25 @@ function normalizeVerificationDraftForLegalStep(
 ): NormalizedVerificationDraftResult {
   const fullName = buildDraftFullName(draft.biodata);
   if (!draft.biodata.first_name.trim()) {
-    return { error: "Complete all verification field before continue: First name is required." } as const;
+    return { error: "Complete all verification field before continue: First name is required.", fields: ["first_name"] } as const;
+  }
+  if (!draft.biodata.middle_name.trim()) {
+    return { error: "Complete all verification field before continue: Middle name is required.", fields: ["middle_name"] } as const;
   }
   if (!draft.biodata.surname.trim()) {
-    return { error: "Complete all verification field before continue: Surname is required." } as const;
+    return { error: "Complete all verification field before continue: Surname is required.", fields: ["surname"] } as const;
   }
   if (!draft.biodata.date_of_birth) {
-    return { error: "Complete all verification field before continue: Date of birth is required." } as const;
+    return { error: "Complete all verification field before continue: Date of birth is required.", fields: ["date_of_birth"] } as const;
   }
   if (!draft.biodata.gender.trim()) {
-    return { error: "Complete all verification field before continue: Gender is required." } as const;
+    return { error: "Complete all verification field before continue: Gender is required.", fields: ["gender"] } as const;
+  }
+  if (!draft.biodata.state_of_origin.trim()) {
+    return { error: "Complete all verification field before continue: State of origin is required.", fields: ["state_of_origin"] } as const;
+  }
+  if (!draft.biodata.country_of_birth.trim()) {
+    return { error: "Complete all verification field before continue: Country of birth is required.", fields: ["country_of_birth"] } as const;
   }
 
   const mobileValidation = validateNigerianMobileNumber(
@@ -466,7 +580,7 @@ function normalizeVerificationDraftForLegalStep(
     false
   );
   if (mobileValidation.error) {
-    return { error: mobileValidation.error } as const;
+    return { error: mobileValidation.error, fields: ["mobile_number"] } as const;
   }
 
   const matriculationValidation = validateUniversityMatriculationNumber(
@@ -476,34 +590,34 @@ function normalizeVerificationDraftForLegalStep(
     draft.biodata.university_matriculation_number.trim() &&
     matriculationValidation.error
   ) {
-    return { error: matriculationValidation.error } as const;
+    return { error: matriculationValidation.error, fields: ["university_matriculation_number"] } as const;
   }
 
   const ninValidation = validateNinNumber(draft.nin.submitted_value);
   if (ninValidation.error) {
-    return { error: ninValidation.error } as const;
+    return { error: ninValidation.error, fields: ["nin"] } as const;
   }
 
   const callupValidation = validateNyscCallupNumber(draft.callup.submitted_value);
   if (callupValidation.error) {
-    return { error: callupValidation.error } as const;
+    return { error: callupValidation.error, fields: ["callup"] } as const;
   }
   if (
     (!(draft.callup.document instanceof File) || draft.callup.document.size === 0) &&
     !draft.callup.document_name.trim()
   ) {
-    return { error: "Upload your NYSC call-up document before continuing." } as const;
+    return { error: "Upload your NYSC call-up document before continuing.", fields: ["callup_document"] } as const;
   }
 
   const stateCodeValidation = validateNyscStateCode(draft.state_code.submitted_value);
   if (stateCodeValidation.error) {
-    return { error: stateCodeValidation.error } as const;
+    return { error: stateCodeValidation.error, fields: ["state_code"] } as const;
   }
   if (
     (!(draft.state_code.document instanceof File) || draft.state_code.document.size === 0) &&
     !draft.state_code.document_name.trim()
   ) {
-    return { error: "Upload your NYSC state code document before continuing." } as const;
+    return { error: "Upload your NYSC state code document before continuing.", fields: ["state_code_document"] } as const;
   }
 
   return {
@@ -611,6 +725,9 @@ export default function CorperVerificationPage() {
   );
   const [profileGenderValue, setProfileGenderValue] = useState("");
   const [profileStateOfOriginValue, setProfileStateOfOriginValue] = useState("");
+  const [highlightedDraftFields, setHighlightedDraftFields] = useState<Set<VerificationDraftFieldKey>>(
+    () => new Set()
+  );
 
   const sortedAttempts = [...(attempts.data?.results ?? [])].sort(
     (left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
@@ -628,7 +745,7 @@ export default function CorperVerificationPage() {
   const progressPercent = Math.round((completedDocumentsCount / verificationDocuments.length) * 100);
   const isInitialProfileLoad = profile.loading && !profile.data;
   const isInitialAttemptsLoad = attempts.loading && !attempts.data;
-  const heroCopy = getHeroCopy(completedDocumentsCount, documentsVerified, profile.data?.is_complete);
+  const heroCopy = getHeroCopy(profile.data ?? null);
   const nextStep = getNextStep(documentsVerified, profile.data?.is_complete);
   const loadErrors = [profile.error, attempts.error].filter(Boolean);
   const verificationRedirectPath = profile.data?.is_complete
@@ -655,66 +772,79 @@ export default function CorperVerificationPage() {
   }, [profile.data?.gender, profile.data?.state_of_origin]);
 
   useEffect(() => {
+    if (highlightedDraftFields.size === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedDraftFields(new Set());
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedDraftFields]);
+
+  useEffect(() => {
     if (!session || session.user.role !== "corper" || typeof profile.data?.is_complete !== "boolean") {
       return;
     }
 
-    const nextProfilePath =
-      profile.data?.terms_accepted || documentsVerified ? "/corper/profile" : "/corper/verification";
+    const nextProfilePath = documentsVerified
+      ? profile.data.terms_accepted
+        ? "/corper/profile"
+        : "/corper/profile/terms"
+      : "/corper/verification";
+    const nextProfileCompleted = documentsVerified && profile.data.is_complete;
 
     if (
       session.user.profile_path !== nextProfilePath ||
-      session.user.profile_completed !== profile.data.is_complete
+      session.user.profile_completed !== nextProfileCompleted
     ) {
       updateSession({
         ...session,
         user: {
           ...session.user,
           profile_path: nextProfilePath,
-          profile_completed: profile.data.is_complete,
+          profile_completed: nextProfileCompleted,
         },
       });
     }
-  }, [documentsVerified, profile.data?.is_complete, profile.data?.terms_accepted, router, session, updateSession]);
+  }, [documentsVerified, profile.data?.is_complete, profile.data?.terms_accepted, session, updateSession]);
+
+  function isDraftFieldHighlighted(field: VerificationDraftFieldKey) {
+    return highlightedDraftFields.has(field);
+  }
+
+  function getDraftFieldClassName(field: VerificationDraftFieldKey, className: string) {
+    return clsx(className, isDraftFieldHighlighted(field) && TEMPORARY_MISSING_FIELD_CLASS_NAME);
+  }
+
+  function clearDraftFieldHighlight(field: VerificationDraftFieldKey) {
+    setHighlightedDraftFields((current) => {
+      if (!current.has(field)) {
+        return current;
+      }
+      const nextFields = new Set(current);
+      nextFields.delete(field);
+      return nextFields;
+    });
+  }
 
   function handleProceedToLegalDocuments() {
-    const normalizedDraft = normalizeVerificationDraftForLegalStep(verificationDraft);
-    if ("error" in normalizedDraft) {
-      const fallbackDraft = {
-        biodata: {
-          ...verificationDraft.biodata,
-          first_name: verificationDraft.biodata.first_name.trim(),
-          middle_name: verificationDraft.biodata.middle_name.trim(),
-          surname: verificationDraft.biodata.surname.trim(),
-          mobile_number: normalizeNigerianMobileInput(verificationDraft.biodata.mobile_number),
-          state_of_origin: verificationDraft.biodata.state_of_origin.trim(),
-          country_of_birth: verificationDraft.biodata.country_of_birth.trim(),
-          university_matriculation_number:
-            verificationDraft.biodata.university_matriculation_number.trim(),
-        },
-        nin: {
-          submitted_value: verificationDraft.nin.submitted_value.trim(),
-        },
-        callup: {
-          ...verificationDraft.callup,
-          submitted_value: formatNyscCallupInput(verificationDraft.callup.submitted_value),
-          document_name:
-            verificationDraft.callup.document?.name ?? verificationDraft.callup.document_name,
-        },
-        state_code: {
-          ...verificationDraft.state_code,
-          submitted_value: formatNyscStateCodeInput(verificationDraft.state_code.submitted_value),
-          document_name:
-            verificationDraft.state_code.document?.name ?? verificationDraft.state_code.document_name,
-        },
-      };
-      replaceDraft(fallbackDraft);
-      persistVerificationDraftForTerms(fallbackDraft, session?.user.email ?? null);
-      persistTermsNavigationSession(session);
-      router.push("/corper/profile/terms");
+    const missingFields = getMissingVerificationDraftFields(verificationDraft);
+    if (missingFields.length) {
+      setHighlightedDraftFields(new Set(missingFields.map((field) => field.key)));
+      toast.error(`Complete required verification fields: ${missingFields.map((field) => field.label).join(", ")}.`);
       return;
     }
 
+    const normalizedDraft = normalizeVerificationDraftForLegalStep(verificationDraft);
+    if ("error" in normalizedDraft) {
+      setHighlightedDraftFields(new Set(normalizedDraft.fields ?? []));
+      toast.error(normalizedDraft.error);
+      return;
+    }
+
+    setHighlightedDraftFields(new Set());
     replaceDraft(normalizedDraft.draft);
     persistVerificationDraftForTerms(normalizedDraft.draft, session?.user.email ?? null);
     persistTermsNavigationSession(session);
@@ -970,67 +1100,71 @@ export default function CorperVerificationPage() {
                       <VerificationField label="First name">
                         <Input
                           value={verificationDraft.biodata.first_name}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            clearDraftFieldHighlight("first_name");
                             replaceDraft({
                               ...verificationDraft,
                               biodata: {
                                 ...verificationDraft.biodata,
                                 first_name: event.target.value,
                               },
-                            })
-                          }
+                            });
+                          }}
                           placeholder="First name"
                           autoCapitalize="words"
-                          className="h-12 bg-white/[0.05] text-xs"
+                          className={getDraftFieldClassName("first_name", "h-12 bg-white/[0.05] text-xs")}
                         />
                       </VerificationField>
                       <VerificationField label="Middle name">
                         <Input
                           value={verificationDraft.biodata.middle_name}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            clearDraftFieldHighlight("middle_name");
                             replaceDraft({
                               ...verificationDraft,
                               biodata: {
                                 ...verificationDraft.biodata,
                                 middle_name: event.target.value,
                               },
-                            })
-                          }
+                            });
+                          }}
                           placeholder="Middle name"
                           autoCapitalize="words"
-                          className="h-12 bg-white/[0.05] text-xs"
+                          className={getDraftFieldClassName("middle_name", "h-12 bg-white/[0.05] text-xs")}
                         />
                       </VerificationField>
                       <VerificationField label="Surname">
                         <Input
                           value={verificationDraft.biodata.surname}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            clearDraftFieldHighlight("surname");
                             replaceDraft({
                               ...verificationDraft,
                               biodata: {
                                 ...verificationDraft.biodata,
                                 surname: event.target.value,
                               },
-                            })
-                          }
+                            });
+                          }}
                           placeholder="Surname"
                           autoCapitalize="words"
-                          className="h-12 bg-white/[0.05] text-xs"
+                          className={getDraftFieldClassName("surname", "h-12 bg-white/[0.05] text-xs")}
                         />
                       </VerificationField>
                     </div>
                     <VerificationField label="Date of birth">
                       <Input
                         value={verificationDraft.biodata.date_of_birth}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          clearDraftFieldHighlight("date_of_birth");
                           replaceDraft({
                             ...verificationDraft,
                             biodata: {
                               ...verificationDraft.biodata,
                               date_of_birth: event.target.value,
                             },
-                          })
-                        }
+                          });
+                        }}
                         type={draftDateOfBirthInputType}
                         onFocus={(event) => {
                           setDraftDateOfBirthInputType("date");
@@ -1042,24 +1176,28 @@ export default function CorperVerificationPage() {
                           }
                         }}
                         placeholder="Date of birth"
-                        className="h-12 bg-white/[0.05] text-xs"
+                        className={getDraftFieldClassName("date_of_birth", "h-12 bg-white/[0.05] text-xs")}
                       />
                     </VerificationField>
                     <div className="grid gap-3">
                       <VerificationField label="State of origin">
                         <select
                           value={verificationDraft.biodata.state_of_origin}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            clearDraftFieldHighlight("state_of_origin");
                             replaceDraft({
                               ...verificationDraft,
                               biodata: {
                                 ...verificationDraft.biodata,
                                 state_of_origin: event.target.value,
                               },
-                            })
-                          }
+                            });
+                          }}
                           className={clsx(
-                            "h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-2 text-sm outline-none",
+                            getDraftFieldClassName(
+                              "state_of_origin",
+                              "h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-2 text-sm outline-none"
+                            ),
                             verificationDraft.biodata.state_of_origin ? "text-white" : "text-zinc-400"
                           )}
                         >
@@ -1076,17 +1214,21 @@ export default function CorperVerificationPage() {
                       <VerificationField label="Country of birth">
                         <select
                           value={verificationDraft.biodata.country_of_birth}
-                          onChange={(event) =>
+                          onChange={(event) => {
+                            clearDraftFieldHighlight("country_of_birth");
                             replaceDraft({
                               ...verificationDraft,
                               biodata: {
                                 ...verificationDraft.biodata,
                                 country_of_birth: event.target.value,
                               },
-                            })
-                          }
+                            });
+                          }}
                           className={clsx(
-                            "text-xs h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-2 text-sm outline-none",
+                            getDraftFieldClassName(
+                              "country_of_birth",
+                              "text-xs h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-2 text-sm outline-none"
+                            ),
                             verificationDraft.biodata.country_of_birth ? "text-white" : "text-zinc-400"
                           )}
                         >
@@ -1113,17 +1255,21 @@ export default function CorperVerificationPage() {
                     <VerificationField label="Gender">
                       <select
                         value={verificationDraft.biodata.gender}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          clearDraftFieldHighlight("gender");
                           replaceDraft({
                             ...verificationDraft,
                             biodata: {
                               ...verificationDraft.biodata,
                               gender: event.target.value,
                             },
-                          })
-                        }
+                          });
+                        }}
                         className={clsx(
-                          "text-xs h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm outline-none",
+                          getDraftFieldClassName(
+                            "gender",
+                            "text-xs h-12 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm outline-none"
+                          ),
                           verificationDraft.biodata.gender ? "text-white" : "text-zinc-400"
                         )}
                       >
@@ -1140,55 +1286,61 @@ export default function CorperVerificationPage() {
                     <VerificationField label="Mobile number">
                       <Input
                         value={verificationDraft.biodata.mobile_number}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          clearDraftFieldHighlight("mobile_number");
                           replaceDraft({
                             ...verificationDraft,
                             biodata: {
                               ...verificationDraft.biodata,
                               mobile_number: normalizeMobileNumber(event.target.value),
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Number linked to NIN e.g. +234.. or 0.."
                         inputMode="tel"
                         maxLength={14}
-                        className="h-12 bg-white/[0.05] text-xs"
+                        className={getDraftFieldClassName("mobile_number", "h-12 bg-white/[0.05] text-xs")}
                       />
                     </VerificationField>
                   </div>
                   <VerificationField label="University matriculation number">
                     <Input
                       value={verificationDraft.biodata.university_matriculation_number}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        clearDraftFieldHighlight("university_matriculation_number");
                         replaceDraft({
                           ...verificationDraft,
                           biodata: {
                             ...verificationDraft.biodata,
                             university_matriculation_number: event.target.value,
                           },
-                        })
-                      }
+                        });
+                      }}
                       placeholder="University matric number"
                       autoCapitalize="characters"
                       maxLength={16}
-                      className="h-12 bg-white/[0.05] text-xs"
+                      className={getDraftFieldClassName(
+                        "university_matriculation_number",
+                        "h-12 bg-white/[0.05] text-xs"
+                      )}
                     />
                   </VerificationField>
                   <VerificationField label="NIN">
                     <Input
                       value={verificationDraft.nin.submitted_value}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        clearDraftFieldHighlight("nin");
                         replaceDraft({
                           ...verificationDraft,
                           nin: {
                             submitted_value: event.target.value,
                           },
-                        })
-                      }
+                        });
+                      }}
                       placeholder="Enter your 11-digit NIN"
                       inputMode="numeric"
                       maxLength={11}
-                      className="h-12 bg-white/[0.05] text-xs"
+                      className={getDraftFieldClassName("nin", "h-12 bg-white/[0.05] text-xs")}
                     />
                   </VerificationField>
                 </Card>
@@ -1202,24 +1354,30 @@ export default function CorperVerificationPage() {
                     <VerificationField label="Call-up number">
                       <Input
                         value={verificationDraft.callup.submitted_value}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          clearDraftFieldHighlight("callup");
                           replaceDraft({
                             ...verificationDraft,
                             callup: {
                               ...verificationDraft.callup,
-                              submitted_value: formatNyscCallupInput(event.target.value),
+                              submitted_value: normalizeNyscCallupNumber(event.target.value),
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="e.g NYSC/LAG/2025/54321"
                         autoCapitalize="characters"
                         maxLength={20}
                         pattern="NYSC/[A-Z]{3}/\\d{4}/\\d{4,6}"
-                        className="h-12 bg-white/[0.05] text-xs"
+                        className={getDraftFieldClassName("callup", "h-12 bg-white/[0.05] text-xs")}
                       />
                     </VerificationField>
                     <VerificationField label="Document">
-                      <label className="grid h-12 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.05] px-4 text-sm text-white transition hover:border-lime/40 hover:bg-white/[0.05]">
+                      <label
+                        className={getDraftFieldClassName(
+                          "callup_document",
+                          "grid h-12 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.05] px-4 text-sm text-white transition hover:border-lime/40 hover:bg-white/[0.05]"
+                        )}
+                      >
                         <FileText className="h-4 w-4 text-lime" />
                         <span className="truncate text-xs text-white/72">
                           {verificationDraft.callup.document?.name ||
@@ -1232,6 +1390,7 @@ export default function CorperVerificationPage() {
                           className="sr-only"
                           onChange={(event) => {
                             const file = event.target.files?.[0] ?? null;
+                            clearDraftFieldHighlight("callup_document");
                             replaceDraft({
                               ...verificationDraft,
                               callup: {
@@ -1256,24 +1415,30 @@ export default function CorperVerificationPage() {
                     <VerificationField label="State code">
                       <Input
                         value={verificationDraft.state_code.submitted_value}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          clearDraftFieldHighlight("state_code");
                           replaceDraft({
                             ...verificationDraft,
                             state_code: {
                               ...verificationDraft.state_code,
-                              submitted_value: formatNyscStateCodeInput(event.target.value),
+                              submitted_value: normalizeNyscStateCode(event.target.value),
                             },
-                          })
-                        }
-                        placeholder="e.g NYSC/EN/25B/45678"
+                          });
+                        }}
+                        placeholder="e.g NYSC/LG/26B/72673"
                         autoCapitalize="characters"
                         maxLength={18}
-                        pattern="NYSC/[A-Z]{2}/\\d{2}[A-Z]/\\d{4,6}"
-                        className="h-12 bg-white/[0.05] text-xs"
+                        pattern="NYSC/[A-Z]{2}/\\d{2}[A-C]/\\d{5,6}"
+                        className={getDraftFieldClassName("state_code", "h-12 bg-white/[0.05] text-xs")}
                       />
                     </VerificationField>
                     <VerificationField label="Document">
-                      <label className="grid h-12 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.05] px-4 text-sm text-white transition hover:border-lime/40 hover:bg-white/[0.05]">
+                      <label
+                        className={getDraftFieldClassName(
+                          "state_code_document",
+                          "grid h-12 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.05] px-4 text-sm text-white transition hover:border-lime/40 hover:bg-white/[0.05]"
+                        )}
+                      >
                         <FileText className="h-4 w-4 text-lime" />
                         <span className="truncate text-xs text-white/72">
                           {verificationDraft.state_code.document?.name ||
@@ -1286,6 +1451,7 @@ export default function CorperVerificationPage() {
                           className="sr-only"
                           onChange={(event) => {
                             const file = event.target.files?.[0] ?? null;
+                            clearDraftFieldHighlight("state_code_document");
                             replaceDraft({
                               ...verificationDraft,
                               state_code: {
@@ -1333,19 +1499,19 @@ export default function CorperVerificationPage() {
                   <p className="mt-3 font-display text-2xl text-white">
                     {completedDocumentsCount}/{verificationDocuments.length}
                   </p>
-                  <p className="mt-2 text-xs text-mist">Number of documents reviewed</p>
+                  <p className="mt-2 text-sm text-mist">Number of documents reviewed</p>
                 </div>
 
                 <div className="rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-sm">
                   <p className="text-xs uppercase tracking-[0.18em] text-lime">Attempts</p>
                   <p className="mt-3 font-display text-2xl text-white">{sortedAttempts.length}</p>
-                  <p className="mt-2 text-xs text-mist">Submission attempts made.</p>
+                  <p className="mt-2 text-sm text-mist">Submission attempts made.</p>
                 </div>
 
                 <div className="rounded-[24px] border border-white/10 bg-black/10 p-4 backdrop-blur-sm">
                   <p className="text-xs uppercase tracking-[0.18em] text-lime">Next step</p>
                   <p className="mt-3 font-display text-xl text-white">{nextStep}</p>
-                  <p className="mt-2 text-xs text-mist">
+                  <p className="mt-2 text-sm text-mist">
                     {documentsVerified
                       ? "Credentials verified, continue with profile update."
                       : "All four verification cards are required before profile unlocks."}
@@ -1631,7 +1797,7 @@ export default function CorperVerificationPage() {
                                     pattern={
                                       document.type === "callup"
                                         ? "NYSC/[A-Za-z]{3}/\\d{4}/\\d{4,6}"
-                                        : "NYSC/[A-Za-z]{2}/\\d{2}[A-Za-z]/\\d{4,6}"
+                                        : "NYSC/[A-Za-z]{2}/\\d{2}[A-Ca-c]/\\d{5,6}"
                                     }
                                     className="h-12 bg-white/[0.05] text-xs"
                                   />
@@ -1683,7 +1849,7 @@ export default function CorperVerificationPage() {
                                       ? "\\d{11}"
                                       : document.type === "callup"
                                         ? "NYSC/[A-Za-z]{3}/\\d{4}/\\d{4,6}"
-                                        : "NYSC/[A-Za-z]{2}/\\d{2}[A-Za-z]/\\d{4,6}"
+                                        : "NYSC/[A-Za-z]{2}/\\d{2}[A-Ca-c]/\\d{5,6}"
                                   }
                                   className="h-12 bg-white/[0.05] text-xs"
                                 />
@@ -1697,7 +1863,7 @@ export default function CorperVerificationPage() {
                                     ? "We only accept the 11-digit NIN format."
                                     : document.type === "callup"
                                       ? "format: e.g. NYSC/ABC/2024/1234 as in your call-up letter."
-                                      : "format: e.g. NYSC/AB/23A/0123 assigned during orientation."}
+                                      : "format: e.g. NYSC/LG/26B/72673 assigned during orientation."}
                                 </p>
                                 {supportsDocumentUpload(document.type) ? (
                                   uploadedDocumentUrl ? (
@@ -1807,7 +1973,8 @@ export default function CorperVerificationPage() {
           ) : sortedAttempts.length ? (
             <div className="divide-y divide-white/10">
               {sortedAttempts.map((attempt) => {
-                const attemptStatus = getStatusMeta(attempt.status, attempt.review_note);
+                const attemptDisplayStatus = getAttemptDisplayStatus(profile.data ?? null, attempt);
+                const attemptStatus = getStatusMeta(attemptDisplayStatus, attempt.review_note);
                 const AttemptIcon = attempt.verification_type === "nin" ? Fingerprint : FileText;
 
                 return (
@@ -1834,7 +2001,7 @@ export default function CorperVerificationPage() {
                           </p>
                         </div>
                         <p className="mt-2 text-sm text-mist">{attemptStatus.description}</p>
-                        {attempt.review_note && normalizeStatus(attempt.status) !== "failed" ? (
+                        {attempt.review_note && normalizeStatus(attemptDisplayStatus) !== "failed" ? (
                           <p className="mt-2 text-xs leading-6 text-white/55">Note: {attempt.review_note}</p>
                         ) : null}
                       </div>

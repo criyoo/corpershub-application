@@ -32,9 +32,9 @@ describe("validateUniversityMatriculationNumber", () => {
 });
 
 describe("validateNyscStateCode", () => {
-  it("accepts an official 2-letter state code, 2-digit year, batch letter, and up to 6 serial digits", () => {
-    expect(validateNyscStateCode("NYSC/AB/23A/0123")).toEqual({
-      normalizedValue: "NYSC/AB/23A/0123",
+  it("accepts any 2-letter code, 2-digit year, A-C batch letter, and 5 to 6 serial digits", () => {
+    expect(validateNyscStateCode("NYSC/LG/26B/72673")).toEqual({
+      normalizedValue: "NYSC/LG/26B/72673",
       error: null,
     });
     expect(validateNyscStateCode("nysc/la/24c/123456")).toEqual({
@@ -47,7 +47,7 @@ describe("validateNyscStateCode", () => {
     expect(validateNyscStateCode("NYSC/LAG/2027/1234")).toEqual({
       normalizedValue: "NYSC/LAG/2027/1234",
       error:
-        "NYSC State Code must match the format NYSC/AB/23A/0123. (where AB='state code' e.g AB=Abia; 23A='batch and stream' e.g. 2023 Batch A; 0123='serial number')",
+        "NYSC State Code must match the format NYSC/LG/26B/72673.",
     });
   });
 });

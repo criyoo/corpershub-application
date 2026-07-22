@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from apps.common.models import UUIDPrimaryKeyModel
@@ -64,6 +65,7 @@ class VerificationAttempt(UUIDPrimaryKeyModel):
             if self.status == self.Status.APPROVED:
                 corper.nin_verification_status = corper_model.SensitiveStatus.VERIFIED
                 corper.biodata_verification_status = corper_model.SensitiveStatus.VERIFIED
+                self._approve_latest_biodata_attempt()
             elif self.status == self.Status.REJECTED:
                 corper.nin_verification_status = corper_model.SensitiveStatus.REJECTED
             else:
@@ -122,6 +124,21 @@ class VerificationAttempt(UUIDPrimaryKeyModel):
             fields_to_update.append("nysc_state_code_verification_status")
 
         corper.save(update_fields=fields_to_update, skip_attempt_sync=True)
+
+    def _approve_latest_biodata_attempt(self):
+        latest_biodata_attempt = (
+            self.corper.verification_attempts.filter(verification_type=self.VerificationType.BIODATA)
+            .exclude(status__in=[self.Status.APPROVED, self.Status.FAILED])
+            .order_by("-created_at")
+            .first()
+        )
+        if latest_biodata_attempt is None:
+            return
+
+        type(self).objects.filter(pk=latest_biodata_attempt.pk).update(
+            status=self.Status.APPROVED,
+            updated_at=timezone.now(),
+        )
 
 
 class CorperVerification(CorperProfile):

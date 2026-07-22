@@ -49,47 +49,8 @@ const NIGERIAN_MOBILE_PREFIXES = new Set([
 ]);
 
 const NYSC_CALLUP_NUMBER_RE = /^NYSC\/[A-Z]{3}\/\d{4}\/\d{4,6}$/;
-const NYSC_STATE_CODE_RE = /^NYSC\/[A-Z]{2}\/\d{2}[A-Z]\/\d{4,6}$/;
+const NYSC_STATE_CODE_RE = /^NYSC\/[A-Z]{2}\/\d{2}[A-C]\/\d{5,6}$/;
 const UNIVERSITY_MATRICULATION_NUMBER_RE = /^[A-Z0-9/]{8,16}$/;
-const NYSC_STATE_CODE_PREFIXES = new Set([
-  "AB",
-  "AD",
-  "AK",
-  "AN",
-  "BA",
-  "BE",
-  "BO",
-  "BY",
-  "CR",
-  "DT",
-  "EB",
-  "ED",
-  "EK",
-  "EN",
-  "FC",
-  "GM",
-  "IM",
-  "JG",
-  "KB",
-  "KD",
-  "KG",
-  "KN",
-  "KT",
-  "KW",
-  "LA",
-  "NG",
-  "NS",
-  "OD",
-  "OG",
-  "OS",
-  "OY",
-  "PL",
-  "RV",
-  "SK",
-  "TR",
-  "YB",
-  "ZM",
-]);
 
 type ValidationResult = {
   normalizedValue: string;
@@ -269,15 +230,7 @@ export function validateNyscStateCode(value: string): ValidationResult {
   if (!NYSC_STATE_CODE_RE.test(normalizedValue)) {
     return {
       normalizedValue,
-      error: "NYSC State Code must match the format NYSC/AB/23A/0123. (where AB='state code' e.g AB=Abia; 23A='batch and stream' e.g. 2023 Batch A; 0123='serial number')"
-    };
-  }
-
-  const parts = normalizedValue.split("/");
-  if (parts.length !== 4 || !NYSC_STATE_CODE_PREFIXES.has(parts[1])) {
-    return {
-      normalizedValue,
-      error: "Enter a valid NYSC State Code using an official 2-letter state code.",
+      error: "NYSC State Code must match the format NYSC/LG/26B/72673.",
     };
   }
 

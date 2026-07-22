@@ -80,7 +80,7 @@ class SeedDemoDataCommandTests(TestCase):
                     "university_matriculation_number": "LAG/2020/54321",
                     "national_identifaction_number": "98736274637",
                     "nysc_callup_number": "NYSC/LAG/2026/123456",
-                    "nysc_state_code": "NYSC/AB/24A/1234",
+                    "nysc_state_code": "NYSC/AB/24A/01234",
                 },
                 "profile": {
                     "photo": str(self.corper_photo_path),
@@ -257,7 +257,7 @@ class SeedDemoDataCommandTests(TestCase):
                         "university_matriculation_number": "LAG/2020/99999",
                         "national_identifaction_number": "98736274637",
                         "nysc_callup_number": "NYSC/LAG/2026/654321",
-                        "nysc_state_code": "NYSC/AB/24A/9999",
+                        "nysc_state_code": "NYSC/AB/24A/09999",
                     },
                     "profile": {
                         "photo": str(self.corper_photo_path),

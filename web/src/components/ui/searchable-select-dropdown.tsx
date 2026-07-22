@@ -92,7 +92,7 @@ export function SearchableSelectDropdown({
         className={clsx(
           "flex min-h-[50px] w-full items-center justify-between rounded-2xl border bg-transparent px-4 py-3 text-left text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-md transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:border-white/8 disabled:text-slate-400",
           hasError
-            ? "border-red-500 focus:border-red-500 focus:ring-red-500/40"
+            ? "border-2 border-red-500 ring-2 ring-red-500/45 focus:border-red-500 focus:ring-red-500/50"
             : "border-white/10 focus:border-white/20 focus:ring-lime/25",
           value ? "text-white" : "text-[grey]"
         )}

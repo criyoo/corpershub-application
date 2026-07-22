@@ -37,7 +37,7 @@ class CorperProfileApprovalFlowTests(APITestCase):
         self.corper.profile_photo = "corpers/profile-photos/ada.jpg"
         self.corper.mobile_number = "+2348031234567"
         self.corper.nysc_callup_number = "NYSC/LAG/2024/123456"
-        self.corper.nysc_state_code = "NYSC/LA/24A/0123"
+        self.corper.nysc_state_code = "NYSC/LA/24A/01234"
         self.corper.skill = "Python"
         self.corper.technical_skills = "Python"
         self.corper.soft_skills = "Communication"

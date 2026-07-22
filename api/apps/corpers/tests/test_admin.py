@@ -32,7 +32,7 @@ class CorperProfileAdminTests(TestCase):
         self.corper.university_matriculation_number = "UNILAG/CSC/001"
         self.corper.mobile_number = "08031234567"
         self.corper.nysc_callup_number = "NYSC/BEN/2027/123456"
-        self.corper.nysc_state_code = "NYSC/BE/27A/0123"
+        self.corper.nysc_state_code = "NYSC/BE/27A/01234"
         self.corper.skill = "Python"
         self.corper.bio = "Ready for deployment."
         self.corper.save(

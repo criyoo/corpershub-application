@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload } from "lucide-react";
 import {
@@ -127,6 +128,8 @@ type CompanyProfileFormValues = {
   directors_name: string;
   director_phone_number: string;
 };
+
+type CompanyProfileFieldKey = keyof CompanyProfileFormValues | "company_image";
 
 type CompanyProfilePayload = {
   company_name: string;
@@ -274,12 +277,14 @@ const CUSTOM_ORGANIZATION_TYPE_OPTION = "Others";
 
 const GENERAL_LABEL = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45";
 const GENERAL_DIV = "grid gap-1.5 text-sm text-mist [&>span:first-child]:text-[10px] [&>span:first-child]:uppercase [&>span:first-child]:tracking-[0.18em] [&>span:first-child]:text-white/45 [&>div>span:first-child]:text-[10px] [&>div>span:first-child]:uppercase [&>div>span:first-child]:tracking-[0.18em] [&>div>span:first-child]:text-white/45";
-const PLACEHOLDER_CLASS_NAME = "placeholder:!text-sm placeholder:!text-slate-300";
-const EMPTY_SELECT_CLASS_NAME = "!text-sm !text-slate-300";
-const EMPTY_DROPDOWN_SUMMARY_CLASS_NAME = "!text-sm !text-slate-300";
+const PLACEHOLDER_CLASS_NAME = "placeholder:!text-sm placeholder:!text-gray-400";
+const TEMPORARY_FIELD_ERROR_CLASS_NAME =
+  "border-2 border-red-500 ring-2 ring-red-500/45 focus:border-red-500 focus:ring-red-500/50";
+const EMPTY_SELECT_CLASS_NAME = "!text-sm !text-gray-400";
+const EMPTY_DROPDOWN_SUMMARY_CLASS_NAME = "!text-sm !text-gray-400";
 const CHECKBOX_CLASS_NAME = "h-4 w-4 rounded border-white/20 bg-transparent accent-[#1FB766]";
 const PLACEHOLDER_OPTION_STYLE: CSSProperties = {
-  color: "#CBD5E1",
+  color: "#9CA3AF",
   fontSize: "0.875rem",
 };
 
@@ -520,73 +525,206 @@ function getMissingProfileFields(
   formValues: CompanyProfileFormValues,
   hasCompanyImage: boolean
 ) {
-  const missingFields: string[] = [];
+  const missingFields: Array<{ key: CompanyProfileFieldKey; label: string }> = [];
 
   if (!formValues.company_name.trim()) {
-    missingFields.push("company name");
+    missingFields.push({ key: "company_name", label: "company name" });
   }
   if (!formValues.company_registration_number.trim()) {
-    missingFields.push("company registration number");
+    missingFields.push({ key: "company_registration_number", label: "company registration number" });
   }
   if (!formValues.tax_identification_number.trim()) {
-    missingFields.push("tax identification number");
+    missingFields.push({ key: "tax_identification_number", label: "tax identification number" });
   }
   if (!formValues.company_sector.trim()) {
-    missingFields.push("company sector");
+    missingFields.push({ key: "company_sector", label: "company sector" });
+  }
+  if (!formValues.organization_type.trim()) {
+    missingFields.push({ key: "organization_type", label: "organisation type" });
+  }
+  if (
+    formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION &&
+    !formValues.organization_type_other.trim()
+  ) {
+    missingFields.push({ key: "organization_type_other", label: "organisation type" });
+  }
+  if (!formValues.staff_count_range.trim()) {
+    missingFields.push({ key: "staff_count_range", label: "number of staff" });
   }
   if (!formValues.ppa_capacity.trim()) {
-    missingFields.push("PPA capacity");
+    missingFields.push({ key: "ppa_capacity", label: "PPA capacity" });
+  }
+  if (!formValues.office_location_count.trim()) {
+    missingFields.push({ key: "office_location_count", label: "number of office locations" });
   }
   if (formValues.company_location_state.length === 0) {
-    missingFields.push("state(s) of operation");
+    missingFields.push({ key: "company_location_state", label: "state(s) of operation" });
   }
   if (formValues.preferred_deployment_states.length === 0) {
-    missingFields.push("preferred states of deployment");
+    missingFields.push({ key: "preferred_deployment_states", label: "preferred states of deployment" });
   }
   if (!formValues.company_location_city.trim()) {
-    missingFields.push("city");
+    missingFields.push({ key: "company_location_city", label: "city" });
+  }
+  if (!formValues.head_office_address.trim()) {
+    missingFields.push({ key: "head_office_address", label: "head office address" });
   }
   if (!formValues.company_address.trim()) {
-    missingFields.push("company address");
+    missingFields.push({ key: "company_address", label: "company operating address" });
+  }
+  if (formValues.placement_type.length === 0) {
+    missingFields.push({ key: "placement_type", label: "placement type" });
+  }
+  if (!formValues.monthly_allowance_offered.trim()) {
+    missingFields.push({ key: "monthly_allowance_offered", label: "monthly allowance offered" });
+  }
+  if (!formValues.accommodation_provided.trim()) {
+    missingFields.push({ key: "accommodation_provided", label: "accommodation provided" });
+  }
+  if (!formValues.directors_name.trim()) {
+    missingFields.push({ key: "directors_name", label: "director's fullname" });
+  }
+  if (!formValues.director_phone_number.trim()) {
+    missingFields.push({ key: "director_phone_number", label: "director's phone number" });
   }
   if (!formValues.contact_phone.trim()) {
-    missingFields.push("contact number");
+    missingFields.push({ key: "contact_phone", label: "contact number" });
   }
   if (!formValues.contact_name.trim()) {
-    missingFields.push("contact fullname");
+    missingFields.push({ key: "contact_name", label: "contact fullname" });
   }
   if (!formValues.contact_email.trim()) {
-    missingFields.push("contact email");
+    missingFields.push({ key: "contact_email", label: "contact email" });
   }
   if (!formValues.desired_corper_description.trim()) {
-    missingFields.push("company summary");
+    missingFields.push({ key: "desired_corper_description", label: "company summary" });
   }
   if (formValues.desired_qualification.length === 0) {
-    missingFields.push("desired qualification");
+    missingFields.push({ key: "desired_qualification", label: "desired qualification" });
   }
   if (!formValues.desired_age_range.trim()) {
-    missingFields.push("desired age range");
+    missingFields.push({ key: "desired_age_range", label: "desired age range" });
   }
   if (formValues.desired_field_of_study.length === 0) {
-    missingFields.push("desired field of study");
+    missingFields.push({ key: "desired_field_of_study", label: "desired field of study" });
   }
   if (formValues.desired_university.length === 0) {
-    missingFields.push("desired university");
+    missingFields.push({ key: "desired_university", label: "desired university" });
   }
   if (formValues.desired_posting_states.length === 0) {
-    missingFields.push("desired posting state");
+    missingFields.push({ key: "desired_posting_states", label: "desired posting state" });
   }
   if (!formValues.desired_skills.trim()) {
-    missingFields.push("desired skills");
+    missingFields.push({ key: "desired_skills", label: "desired skills" });
   }
   if (!formValues.desired_experience.trim()) {
-    missingFields.push("desired experience");
+    missingFields.push({ key: "desired_experience", label: "desired experience" });
   }
   if (!hasCompanyImage) {
-    missingFields.push("profile photo");
+    missingFields.push({ key: "company_image", label: "company image" });
   }
 
   return missingFields;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isValidHttpUrl(value: string) {
+  try {
+    const parsedUrl = new URL(value);
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getInvalidProfileFields(formValues: CompanyProfileFormValues) {
+  const invalidFields: Array<{ key: CompanyProfileFieldKey; label: string; message: string }> = [];
+  const registrationNumberValidation = validateCompanyRegistrationNumber(
+    formValues.company_registration_number
+  );
+  const taxIdentificationNumberValidation = validateTaxIdentificationNumber(
+    formValues.tax_identification_number
+  );
+  const phoneValidation = validateNigerianMobileNumber(
+    formValues.contact_phone,
+    "Contact phone number",
+    true,
+    true
+  );
+  const directorPhoneValidation = validateNigerianMobileNumber(
+    formValues.director_phone_number,
+    "Director phone number",
+    false,
+    true
+  );
+
+  if (formValues.company_registration_number.trim() && registrationNumberValidation.error) {
+    invalidFields.push({
+      key: "company_registration_number",
+      label: "company registration number",
+      message: registrationNumberValidation.error,
+    });
+  }
+  if (formValues.tax_identification_number.trim() && taxIdentificationNumberValidation.error) {
+    invalidFields.push({
+      key: "tax_identification_number",
+      label: "tax identification number",
+      message: taxIdentificationNumberValidation.error,
+    });
+  }
+  if (formValues.contact_phone.trim() && phoneValidation.error) {
+    invalidFields.push({
+      key: "contact_phone",
+      label: "contact number",
+      message: phoneValidation.error,
+    });
+  }
+  if (formValues.director_phone_number.trim() && directorPhoneValidation.error) {
+    invalidFields.push({
+      key: "director_phone_number",
+      label: "director phone number",
+      message: directorPhoneValidation.error,
+    });
+  }
+  if (formValues.contact_email.trim() && !isValidEmail(formValues.contact_email)) {
+    invalidFields.push({
+      key: "contact_email",
+      label: "contact email",
+      message: "Enter a valid contact email.",
+    });
+  }
+  if (formValues.company_website.trim() && !isValidHttpUrl(formValues.company_website)) {
+    invalidFields.push({
+      key: "company_website",
+      label: "company website",
+      message: "Enter a valid company website URL.",
+    });
+  }
+  if (!/^\d+$/.test(formValues.ppa_capacity.trim()) || Number(formValues.ppa_capacity) < 1) {
+    invalidFields.push({
+      key: "ppa_capacity",
+      label: "PPA capacity",
+      message: "PPA capacity must be at least 1.",
+    });
+  }
+  if (
+    formValues.office_location_count.trim() &&
+    (
+      !/^\d+$/.test(formValues.office_location_count.trim()) ||
+      Number(formValues.office_location_count) < 1
+    )
+  ) {
+    invalidFields.push({
+      key: "office_location_count",
+      label: "number of office locations",
+      message: "Number of office locations must be at least 1.",
+    });
+  }
+
+  return invalidFields;
 }
 
 export default function CompanyProfilePage() {
@@ -654,6 +792,9 @@ function CompanyProfilePageContent() {
   const [isContactPhoneSameAsDirector, setIsContactPhoneSameAsDirector] = useState(false);
   const [isDesiredPostingStateSameAsPreferred, setIsDesiredPostingStateSameAsPreferred] =
     useState(false);
+  const [highlightedFields, setHighlightedFields] = useState<Set<CompanyProfileFieldKey>>(
+    () => new Set()
+  );
   const companyImageInputRef = useRef<HTMLInputElement>(null);
   const hasInitializedForm = useRef(false);
   const shouldPersistDraft = useRef(false);
@@ -712,6 +853,18 @@ function CompanyProfilePageContent() {
     };
   }, [companyImagePreviewUrl]);
 
+  useEffect(() => {
+    if (highlightedFields.size === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedFields(new Set());
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedFields]);
+
   const isComplete = profile?.is_complete === true;
   const isEditMode = searchParams.get("edit") === "1";
 
@@ -734,10 +887,26 @@ function CompanyProfilePageContent() {
     ),
   ];
 
+  function isProfileFieldHighlighted(field: CompanyProfileFieldKey) {
+    return highlightedFields.has(field);
+  }
+
+  function clearHighlightedField(field: CompanyProfileFieldKey) {
+    setHighlightedFields((current) => {
+      if (!current.has(field)) {
+        return current;
+      }
+      const nextFields = new Set(current);
+      nextFields.delete(field);
+      return nextFields;
+    });
+  }
+
   function updateFormValue<Key extends keyof CompanyProfileFormValues>(
     name: Key,
     value: CompanyProfileFormValues[Key]
   ) {
+    clearHighlightedField(name);
     shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
@@ -749,6 +918,7 @@ function CompanyProfilePageContent() {
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = event.target;
+    clearHighlightedField(name as CompanyProfileFieldKey);
     const normalizedValue =
       name === "contact_phone" || name === "director_phone_number"
         ? normalizeNigerianMobileInput(value)
@@ -779,6 +949,7 @@ function CompanyProfilePageContent() {
     const { checked } = event.target;
     setIsCompanyAddressSameAsHeadOffice(checked);
     if (checked) {
+      clearHighlightedField("company_address");
       updateFormValue("company_address", formValues.head_office_address);
     }
   }
@@ -787,6 +958,7 @@ function CompanyProfilePageContent() {
     const { checked } = event.target;
     setIsContactNameSameAsDirector(checked);
     if (checked) {
+      clearHighlightedField("contact_name");
       updateFormValue("contact_name", formValues.directors_name);
     }
   }
@@ -795,11 +967,16 @@ function CompanyProfilePageContent() {
     const { checked } = event.target;
     setIsContactPhoneSameAsDirector(checked);
     if (checked) {
+      clearHighlightedField("contact_phone");
       updateFormValue("contact_phone", formValues.director_phone_number);
     }
   }
 
   function handlePreferredDeploymentStatesChange(values: string[]) {
+    clearHighlightedField("preferred_deployment_states");
+    if (isDesiredPostingStateSameAsPreferred) {
+      clearHighlightedField("desired_posting_states");
+    }
     shouldPersistDraft.current = true;
     setFormValues((current) => ({
       ...current,
@@ -812,6 +989,7 @@ function CompanyProfilePageContent() {
     const { checked } = event.target;
     setIsDesiredPostingStateSameAsPreferred(checked);
     if (checked) {
+      clearHighlightedField("desired_posting_states");
       updateFormValue("desired_posting_states", formValues.preferred_deployment_states);
     }
   }
@@ -836,6 +1014,7 @@ function CompanyProfilePageContent() {
     }
 
     const file = event.target.files?.[0] ?? null;
+    clearHighlightedField("company_image");
     if (companyImagePreviewUrl) {
       URL.revokeObjectURL(companyImagePreviewUrl);
     }
@@ -849,6 +1028,7 @@ function CompanyProfilePageContent() {
     if (file.size > 10 * 1024 * 1024) {
       setSelectedCompanyImage(null);
       setCompanyImagePreviewUrl(null);
+      setHighlightedFields(new Set(["company_image"]));
       if (companyImageInputRef.current) {
         companyImageInputRef.current.value = "";
       }
@@ -864,6 +1044,7 @@ function CompanyProfilePageContent() {
     } catch (error) {
       setSelectedCompanyImage(null);
       setCompanyImagePreviewUrl(null);
+      setHighlightedFields(new Set(["company_image"]));
       if (companyImageInputRef.current) {
         companyImageInputRef.current.value = "";
       }
@@ -884,9 +1065,17 @@ function CompanyProfilePageContent() {
       Boolean(selectedCompanyImage || profile.company_image)
     );
     if (missingFields.length > 0) {
+      setHighlightedFields(new Set(missingFields.map((field) => field.key)));
       toast.error(
-        `Complete all company profile fields before saving: ${missingFields.join(", ")}.`
+        `Complete all company profile fields before saving: ${missingFields.map((field) => field.label).join(", ")}.`
       );
+      return;
+    }
+
+    const invalidFields = getInvalidProfileFields(formValues);
+    if (invalidFields.length > 0) {
+      setHighlightedFields(new Set(invalidFields.map((field) => field.key)));
+      toast.error(invalidFields[0].message);
       return;
     }
 
@@ -894,6 +1083,7 @@ function CompanyProfilePageContent() {
       formValues.company_registration_number
     );
     if (registrationNumberValidation.error) {
+      setHighlightedFields(new Set(["company_registration_number"]));
       toast.error(registrationNumberValidation.error);
       return;
     }
@@ -902,6 +1092,7 @@ function CompanyProfilePageContent() {
       formValues.tax_identification_number
     );
     if (taxIdentificationNumberValidation.error) {
+      setHighlightedFields(new Set(["tax_identification_number"]));
       toast.error(taxIdentificationNumberValidation.error);
       return;
     }
@@ -913,6 +1104,7 @@ function CompanyProfilePageContent() {
       true
     );
     if (phoneValidation.error) {
+      setHighlightedFields(new Set(["contact_phone"]));
       toast.error(phoneValidation.error);
       return;
     }
@@ -924,11 +1116,13 @@ function CompanyProfilePageContent() {
       true
     );
     if (directorPhoneValidation.error) {
+      setHighlightedFields(new Set(["director_phone_number"]));
       toast.error(directorPhoneValidation.error);
       return;
     }
 
     if (!/^\d+$/.test(formValues.ppa_capacity.trim()) || Number(formValues.ppa_capacity) < 1) {
+      setHighlightedFields(new Set(["ppa_capacity"]));
       toast.error("PPA capacity must be at least 1.");
       return;
     }
@@ -940,6 +1134,7 @@ function CompanyProfilePageContent() {
         Number(formValues.office_location_count) < 1
       )
     ) {
+      setHighlightedFields(new Set(["office_location_count"]));
       toast.error("Number of office locations must be at least 1.");
       return;
     }
@@ -948,10 +1143,12 @@ function CompanyProfilePageContent() {
       formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION &&
       !formValues.organization_type_other.trim()
     ) {
+      setHighlightedFields(new Set(["organization_type_other"]));
       toast.error("Enter the organisation type.");
       return;
     }
 
+    setHighlightedFields(new Set());
     setIsSaving(true);
     try {
       const formData = new FormData();
@@ -1043,7 +1240,12 @@ function CompanyProfilePageContent() {
   }
 
   const headerAside = (
-    <div className="w-full max-w-[220px] rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-xl">
+    <div
+      className={clsx(
+        "w-full max-w-[220px] rounded-[28px] border border-white/12 bg-white/[0.08] p-4 backdrop-blur-xl",
+        isProfileFieldHighlighted("company_image") && TEMPORARY_FIELD_ERROR_CLASS_NAME
+      )}
+    >
       <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.06]">
         <div className="aspect-[4/3] w-full">
           {resolvedCompanyImageUrl ? (
@@ -1096,7 +1298,7 @@ function CompanyProfilePageContent() {
           <p className="text-sm text-mist">Unable to load your company profile right now.</p>
         </Card>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <Card className="grid gap-6 bg-white/[0.01]">
             <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-display text-xl text-white">Company Information</h2>
@@ -1115,6 +1317,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_name")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1127,6 +1330,7 @@ function CompanyProfilePageContent() {
                   value={formValues.company_registration_date}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_registration_date")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1146,6 +1350,7 @@ function CompanyProfilePageContent() {
                   spellCheck={false}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_registration_number")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1164,6 +1369,7 @@ function CompanyProfilePageContent() {
                   spellCheck={false}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("tax_identification_number")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1180,6 +1386,7 @@ function CompanyProfilePageContent() {
                   emptyStateText="No state matches your search."
                   onChange={(values) => updateFormValue("company_location_state", values)}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_location_state")}
                 />
               </div>
 
@@ -1192,6 +1399,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_location_city")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1204,6 +1412,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_sector")}
                   className={selectClassName(formValues.company_sector)}
                   style={selectPlaceholderStyle(formValues.company_sector)}
                 >
@@ -1225,6 +1434,7 @@ function CompanyProfilePageContent() {
                   value={formValues.organization_type}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("organization_type")}
                   className={selectClassName(formValues.organization_type)}
                   style={selectPlaceholderStyle(formValues.organization_type)}
                 >
@@ -1236,8 +1446,27 @@ function CompanyProfilePageContent() {
                       {option}
                     </option>
                   ))}
+                  <option value={CUSTOM_ORGANIZATION_TYPE_OPTION}>
+                    {CUSTOM_ORGANIZATION_TYPE_OPTION}
+                  </option>
                 </Select>
               </label>
+
+              {formValues.organization_type === CUSTOM_ORGANIZATION_TYPE_OPTION ? (
+                <label className={GENERAL_LABEL}>
+                  <span>{fieldLabel("Other organisation type", true)}</span>
+                  <Input
+                    name="organization_type_other"
+                    placeholder="Enter organisation type"
+                    value={formValues.organization_type_other}
+                    onChange={handleFieldChange}
+                    required
+                    disabled={!canEditProfile}
+                    hasError={isProfileFieldHighlighted("organization_type_other")}
+                    className={PLACEHOLDER_CLASS_NAME}
+                  />
+                </label>
+              ) : null}
 
               <label className={GENERAL_LABEL}>
                 <span>{fieldLabel("Number of office locations", true)}</span>
@@ -1249,6 +1478,7 @@ function CompanyProfilePageContent() {
                   value={formValues.office_location_count}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("office_location_count")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1260,6 +1490,7 @@ function CompanyProfilePageContent() {
                   value={formValues.staff_count_range}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("staff_count_range")}
                   className={selectClassName(formValues.staff_count_range)}
                   style={selectPlaceholderStyle(formValues.staff_count_range)}
                 >
@@ -1283,6 +1514,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_corper_description")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1309,6 +1541,7 @@ function CompanyProfilePageContent() {
                   summaryClassName={dropdownSummaryClassName(formValues.placement_type)}
                   onChange={(values) => updateFormValue("placement_type", values)}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("placement_type")}
                 />
               </div>
 
@@ -1319,6 +1552,7 @@ function CompanyProfilePageContent() {
                   value={formValues.accommodation_provided}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("accommodation_provided")}
                   className={selectClassName(formValues.accommodation_provided)}
                   style={selectPlaceholderStyle(formValues.accommodation_provided)}
                 >
@@ -1344,6 +1578,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("ppa_capacity")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1355,6 +1590,7 @@ function CompanyProfilePageContent() {
                   value={formValues.ppa_support}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("ppa_support")}
                   className={selectClassName(formValues.ppa_support)}
                   style={selectPlaceholderStyle(formValues.ppa_support)}
                 >
@@ -1381,6 +1617,7 @@ function CompanyProfilePageContent() {
                   emptyStateText="No state matches your search."
                   onChange={handlePreferredDeploymentStatesChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("preferred_deployment_states")}
                 />
               </div>
 
@@ -1391,6 +1628,7 @@ function CompanyProfilePageContent() {
                   value={formValues.monthly_allowance_offered}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("monthly_allowance_offered")}
                   className={selectClassName(formValues.monthly_allowance_offered)}
                   style={selectPlaceholderStyle(formValues.monthly_allowance_offered)}
                 >
@@ -1426,6 +1664,7 @@ function CompanyProfilePageContent() {
                   value={formValues.head_office_address}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("head_office_address")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1451,6 +1690,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile || isCompanyAddressSameAsHeadOffice}
+                  hasError={isProfileFieldHighlighted("company_address")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </div>
@@ -1463,6 +1703,7 @@ function CompanyProfilePageContent() {
                   value={formValues.directors_name}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("directors_name")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1476,6 +1717,7 @@ function CompanyProfilePageContent() {
                   inputMode="tel"
                   maxLength={14}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("director_phone_number")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1501,6 +1743,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile || isContactNameSameAsDirector}
+                  hasError={isProfileFieldHighlighted("contact_name")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </div>
@@ -1527,6 +1770,7 @@ function CompanyProfilePageContent() {
                   maxLength={14}
                   required
                   disabled={!canEditProfile || isContactPhoneSameAsDirector}
+                  hasError={isProfileFieldHighlighted("contact_phone")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </div>
@@ -1541,6 +1785,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("contact_email")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1553,6 +1798,7 @@ function CompanyProfilePageContent() {
                   value={formValues.company_website}
                   onChange={handleFieldChange}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("company_website")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1580,6 +1826,7 @@ function CompanyProfilePageContent() {
                   summaryClassName={dropdownSummaryClassName(formValues.desired_qualification)}
                   onChange={(values) => updateFormValue("desired_qualification", values)}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_qualification")}
                 />
               </label>
               <label className={GENERAL_LABEL}>
@@ -1595,6 +1842,7 @@ function CompanyProfilePageContent() {
                   emptyStateText="No fields of study match your search."
                   onChange={(values) => updateFormValue("desired_field_of_study", values)}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_field_of_study")}
                 />
               </label>
 
@@ -1611,6 +1859,7 @@ function CompanyProfilePageContent() {
                   emptyStateText="No university matches your search."
                   onChange={(values) => updateFormValue("desired_university", values)}
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_university")}
                 />
               </label>
 
@@ -1638,6 +1887,7 @@ function CompanyProfilePageContent() {
                   emptyStateText="No state matches your search."
                   onChange={(values) => updateFormValue("desired_posting_states", values)}
                   disabled={!canEditProfile || isDesiredPostingStateSameAsPreferred}
+                  hasError={isProfileFieldHighlighted("desired_posting_states")}
                 />
               </div>
 
@@ -1650,6 +1900,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_skills")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1662,6 +1913,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_age_range")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>
@@ -1675,6 +1927,7 @@ function CompanyProfilePageContent() {
                   onChange={handleFieldChange}
                   required
                   disabled={!canEditProfile}
+                  hasError={isProfileFieldHighlighted("desired_experience")}
                   className={PLACEHOLDER_CLASS_NAME}
                 />
               </label>

@@ -86,7 +86,7 @@ class CorperRecommendationSearchTests(APITestCase):
             matched_corper,
             matric_no="UNILAG/BUS/001",
             photo="corpers/profile-photos/matched.jpg",
-            state_code="NYSC/LA/25A/0101",
+            state_code="NYSC/LA/25A/00101",
         )
         matched_corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         matched_corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -130,7 +130,7 @@ class CorperRecommendationSearchTests(APITestCase):
             close_corper,
             matric_no="LASU/BUS/002",
             photo="corpers/profile-photos/close.jpg",
-            state_code="NYSC/LA/25A/0202",
+            state_code="NYSC/LA/25A/00202",
         )
         close_corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         close_corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
@@ -174,7 +174,7 @@ class CorperRecommendationSearchTests(APITestCase):
             secondary_corper,
             matric_no="YABATECH/ART/003",
             photo="corpers/profile-photos/secondary.jpg",
-            state_code="NYSC/FC/25A/0303",
+            state_code="NYSC/FC/25A/00303",
         )
         secondary_corper.biodata_verification_status = CorperProfile.SensitiveStatus.VERIFIED
         secondary_corper.nin_verification_status = CorperProfile.SensitiveStatus.VERIFIED
