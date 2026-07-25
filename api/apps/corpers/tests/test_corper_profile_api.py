@@ -931,6 +931,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.mobile_number, "")
 
     @override_settings(
+        VERIFICATION_SERVICE="dikript",
         DIKRIPT_API_BASE_URL="https://api.dikript.com",
         DIKRIPT_NIN_API_URL="/dikript/verification/api/v1/getnin",
         DIKRIPT_SECRET_KEY="test-key",
@@ -998,6 +999,76 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
 
     @override_settings(
+        VERIFICATION_SERVICE="prembly",
+        PREMBLY_API_BASE_URL="https://api.prembly.com",
+        PREMBLY_NIN_API_URL="/verification/vnin",
+        PREMBLY_API_KEY="test-key",
+        PREMBLY_TIMEOUT_SECONDS=10,
+    )
+    def test_nin_verification_accepts_prembly_payload_shape(self):
+        cache.clear()
+        biodata_response = self.client.post(
+            "/api/verification/attempts/",
+            {
+                "verification_type": VerificationAttempt.VerificationType.BIODATA,
+                "first_name": "Christian",
+                "middle_name": "Odezi",
+                "surname": "Aluya",
+                "date_of_birth": "1977-02-06",
+                "gender": "male",
+                "mobile_number": "08099446062",
+                "state_of_origin": "Delta",
+                "country_of_birth": "Nigeria",
+            },
+            format="json",
+        )
+        self.assertEqual(biodata_response.status_code, 201)
+
+        live_payload = {
+            "status": True,
+            "response_code": "00",
+            "message": "National Identity Number (NIN) verification successful",
+            "detail": "National Identity Number (NIN) verification successful",
+            "data": {
+                "birthcountry": "nigeria",
+                "birthdate": "06-02-1977",
+                "gender": "m",
+                "telephoneno": "08099446062",
+                "firstname": "CHRISTIAN",
+                "middlename": "ODEZI",
+                "surname": "ALUYA",
+                "nin": "91231161558",
+                "vnin": "",
+                "photo": "base64-photo",
+                "signature": "base64-signature",
+            },
+            "verification_status": "verified",
+        }
+
+        with patch(
+            "apps.verification.prembly_verification.urlopen",
+            return_value=self._FakeHTTPResponse(live_payload),
+        ) as urlopen_mock:
+            nin_response = self.client.post(
+                "/api/verification/attempts/",
+                {
+                    "verification_type": VerificationAttempt.VerificationType.NIN,
+                    "submitted_value": "91231161558",
+                },
+                format="json",
+            )
+
+        self.assertEqual(nin_response.status_code, 201)
+        request = urlopen_mock.call_args.args[0]
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(json.loads(request.data.decode("utf-8")), {"number_nin": "91231161558"})
+        corper = ensure_corper_profile(self.corper_user)
+        self.assertEqual(corper.nin_number, "91231161558")
+        self.assertEqual(corper.nin_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+        self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
+
+    @override_settings(
+        VERIFICATION_SERVICE="dikript",
         DIKRIPT_API_BASE_URL="https://api.dikript.com",
         DIKRIPT_NIN_API_URL="/dikript/verification/api/v1/getnin",
         DIKRIPT_SECRET_KEY="test-key",
@@ -1059,6 +1130,7 @@ class CorperProfileAPITests(APITestCase):
         self.assertEqual(corper.biodata_verification_status, CorperProfile.SensitiveStatus.VERIFIED)
 
     @override_settings(
+        VERIFICATION_SERVICE="dikript",
         DIKRIPT_API_BASE_URL="https://api.dikript.com",
         DIKRIPT_NIN_API_URL="/dikript/verification/api/v1/getnin",
         DIKRIPT_SECRET_KEY="test-key",

@@ -205,6 +205,7 @@ OTP_RESEND_WINDOW_SECONDS = int(env("OTP_RESEND_WINDOW_SECONDS", "60") or "60")
 OTP_MAX_ATTEMPTS = int(env("OTP_MAX_ATTEMPTS", "5") or "5")
 OTP_EMAIL_ASYNC = env_bool("OTP_EMAIL_ASYNC", True)
 SEED_DEMO_ACCOUNTS = env_bool("SEED_DEMO_ACCOUNTS", False)
+VERIFICATION_SERVICE = (env("VERIFICATION_SERVICE", "prembly") or "prembly").strip().lower()
 DIKRIPT_API_BASE_URL = env("DIKRIPT_API_BASE_URL", "https://api.dikript.com") or "https://api.dikript.com"
 DIKRIPT_NIN_API_URL = (
     env("DIKRIPT_NIN_API_URL", "/dikript/verification/api/v1/getnin") or "/dikript/verification/api/v1/getnin"
@@ -218,6 +219,15 @@ DIKRIPT_TIMEOUT_SECONDS = float(env("DIKRIPT_TIMEOUT_SECONDS", "10") or "10")
 DIKRIPT_LOOKUP_CACHE_TIMEOUT_SECONDS = int(
     env("DIKRIPT_LOOKUP_CACHE_TIMEOUT_SECONDS", str(60 * 60 * 24)) or str(60 * 60 * 24)
 )
+PREMBLY_API_BASE_URL = env("PREMBLY_API_BASE_URL", "https://api.prembly.com") or "https://api.prembly.com"
+PREMBLY_NIN_API_URL = env("PREMBLY_NIN_API_URL", "/verification/vnin") or "/verification/vnin"
+PREMBLY_CAC_API_URL = env("PREMBLY_CAC_API_URL", "/verification/cac") or "/verification/cac"
+PREMBLY_API_KEY = env("PREMBLY_API_KEY", "") or ""
+PREMBLY_TIMEOUT_SECONDS = float(env("PREMBLY_TIMEOUT_SECONDS", "10") or "10")
+PREMBLY_LOOKUP_CACHE_TIMEOUT_SECONDS = int(
+    env("PREMBLY_LOOKUP_CACHE_TIMEOUT_SECONDS", str(60 * 60 * 24)) or str(60 * 60 * 24)
+)
+PREMBLY_CAC_COMPANY_TYPE = (env("PREMBLY_CAC_COMPANY_TYPE", "RC") or "RC").strip().upper()
 
 HOSTINGER_SMTP_HOST = "smtp.hostinger.com"
 HOSTINGER_SMTP_SSL_PORT = 465

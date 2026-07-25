@@ -75,6 +75,28 @@ class CompanyVerificationFlowTests(APITestCase):
             "error": None,
         }
 
+    def _prembly_cac_payload(self, **overrides):
+        data = {
+            "state": "LAGOS",
+            "address": "Adekunle Lawal",
+            "company_status": "ACTIVE",
+            "status": "ACTIVE",
+            "email_address": "info@summitrockholdings.com",
+            "rc_number": "9629888",
+            "company_type": "company",
+            "date_of_registration": "2026-06-23T12:54:18.188+00:00",
+            "company_name": "SUMMITROCK LIMITED",
+        }
+        data.update(overrides)
+        return {
+            "status": True,
+            "response_code": "00",
+            "message": "CAC Advanced Verification verification successful",
+            "detail": "CAC Advanced Verification verification successful",
+            "data": data,
+            "verification_status": "verified",
+        }
+
     def _complete_company_profile(self):
         self.company.company_name = "Prime Logistics"
         self.company.company_registration_number = "RC1754689"
@@ -201,6 +223,18 @@ class CompanyVerificationFlowTests(APITestCase):
             str(exc.exception.detail["company_registration_date"]),
             "The company registration date does not match the CAC record.",
         )
+
+    @patch("apps.companies.verification.dikript_lookup")
+    def test_company_verification_accepts_prembly_cac_payload(self, verification_lookup_mock):
+        self.company.company_name = "Summitrock Ltd"
+        self.company.company_registration_number = "RC9629888"
+        self.company.company_registration_date = date(2026, 6, 23)
+        self.company.tax_identification_number = "1234567890"
+        verification_lookup_mock.return_value = self._prembly_cac_payload()
+
+        returned_data = verify_company_profile_or_raise(self.company)
+
+        self.assertEqual(returned_data["rc_number"], "9629888")
 
     def test_verified_company_edit_does_not_reverify_on_tax_id_or_state_change(self):
         self._complete_company_profile()

@@ -1,15 +1,18 @@
 name: Deploy Production
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
   workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
   issues: write
+  pull-requests: read
 
 concurrency:
   group: deploy-production
@@ -26,14 +29,16 @@ env:
 
 jobs:
   detect-web-changes:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
-      web: ${{ steps.filter.outputs.web }}
+      web: ${{ steps.resolve.outputs.web }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             web:
@@ -46,6 +51,15 @@ jobs:
               - "package-lock.json"
               - "turbo.json"
               - ".github/workflows/prod.yml"
+
+      - name: Resolve web change flag
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "web=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "web=${{ steps.filter.outputs.web }}" >> "$GITHUB_OUTPUT"
+          fi
 
   lint-web:
     needs: detect-web-changes
@@ -169,14 +183,16 @@ jobs:
 
         
   detect-api-changes:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
-      api: ${{ steps.filter.outputs.api }}
+      api: ${{ steps.resolve.outputs.api }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             api:
@@ -186,6 +202,15 @@ jobs:
               - "scripts/deploy/api.sh"
               - "scripts/migrate.sh"
               - ".github/workflows/prod.yml"
+
+      - name: Resolve api change flag
+        id: resolve
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=${{ steps.filter.outputs.api }}" >> "$GITHUB_OUTPUT"
+          fi
 
   lint-api:
     needs: detect-api-changes

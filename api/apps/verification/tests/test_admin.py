@@ -10,7 +10,16 @@ from apps.verification.models import CorperVerification, VerificationAttempt
 User = get_user_model()
 
 
-@override_settings(STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage")
+@override_settings(
+    STORAGES={
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+)
 class VerificationAdminTests(TestCase):
     def setUp(self):
         self.superuser = User.objects.create_superuser(

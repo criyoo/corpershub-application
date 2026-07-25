@@ -10,13 +10,15 @@ from django.conf import settings
 from rest_framework.exceptions import APIException, ValidationError
 
 from apps.verification.dikript import (
-    dikript_lookup,
-    extract_dikript_message,
     is_truthy,
     normalize_registration_digits,
     normalize_registration_lookup_value,
 )
 from apps.verification.models import DikriptVerificationCache
+from apps.verification.verification_service import (
+    extract_verification_message as extract_dikript_message,
+    verification_lookup as dikript_lookup,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,38 @@ def resolve_company_registration_active_status(raw_is_active: Any, company_statu
     return is_truthy(raw_is_active) or normalized_status == "ACTIVE"
 
 
+def _first_present(data: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = data.get(key)
+        if value not in (None, ""):
+            return value
+    return ""
+
+
+def _split_company_registration_number(value: str) -> tuple[str, str]:
+    normalized = normalize_company_registration_number(value)
+    match = re.match(rf"^({'|'.join(ALLOWED_COMPANY_REGISTRATION_PREFIXES)})(\d+)$", normalized)
+    if not match:
+        return "RC", normalize_registration_digits(normalized)
+    return match.group(1), match.group(2)
+
+
+def _returned_registration_number(data: dict[str, Any], fallback_registration_number: str) -> str:
+    fallback_prefix, fallback_digits = _split_company_registration_number(fallback_registration_number)
+    returned_value = str(_first_present(data, "rcNumber", "rc_number", "number") or "").strip()
+    returned_prefix, returned_digits = _split_company_registration_number(returned_value)
+    if not returned_digits:
+        returned_digits = fallback_digits
+    prefix = returned_prefix if returned_value.upper().startswith(returned_prefix) else fallback_prefix
+    return coerce_company_registration_number(f"{prefix}{returned_digits}")
+
+
+def _company_status(data: dict[str, Any]) -> str:
+    if data.get("registrationApproved") is not None:
+        return "APPROVED" if is_truthy(data.get("registrationApproved")) else "PENDING"
+    return str(_first_present(data, "company_status", "status") or "").strip().upper()
+
+
 def lookup_company_registration_number(
     company_registration_number: str,
 ) -> CompanyRegistrationLookupResult:
@@ -110,11 +144,9 @@ def lookup_company_registration_number(
     if not payload.get("status") or not isinstance(data, dict) or not data:
         raise ValidationError({"company_registration_number": _build_lookup_failure_message(payload)})
 
-    company_name = str(data.get("companyName") or "").strip()
-    company_status = "APPROVED" if is_truthy(data.get("registrationApproved")) else "PENDING"
-    company_registration_number = coerce_company_registration_number(
-        f"RC {normalize_registration_digits(data.get('rcNumber') or normalized_registration_number)}"
-    )
+    company_name = str(_first_present(data, "companyName", "company_name") or "").strip()
+    company_status = _company_status(data)
+    company_registration_number = _returned_registration_number(data, normalized_registration_number)
     if not company_name or not company_registration_number:
         logger.warning(
             "Company registration lookup returned incomplete data.",
@@ -140,10 +172,10 @@ def lookup_company_registration_number(
     return CompanyRegistrationLookupResult(
         company_name=company_name,
         company_registration_number=company_registration_number,
-        company_address=str(data.get("address") or data.get("headOfficeAddress") or "").strip(),
+        company_address=str(_first_present(data, "address", "company_address", "headOfficeAddress") or "").strip(),
         company_status=company_status,
-        registration_date=str(data.get("registrationDate") or "").strip(),
-        company_type=str(data.get("companyType") or data.get("classification") or "").strip(),
+        registration_date=str(_first_present(data, "registrationDate", "date_of_registration") or "").strip(),
+        company_type=str(_first_present(data, "companyType", "company_type", "classification", "entity_type") or "").strip(),
         is_active=is_active,
     )
 

@@ -91,6 +91,37 @@ class CompanyRegistrationLookupTests(SimpleTestCase):
         self.assertEqual(company.company_type, "company")
         self.assertTrue(company.is_active)
 
+    def test_lookup_company_registration_number_accepts_prembly_payload(self):
+        payload = {
+            "status": True,
+            "response_code": "00",
+            "message": "CAC Advanced Verification verification successful",
+            "data": {
+                "state": "LAGOS",
+                "address": "Adekunle Lawal",
+                "company_status": "ACTIVE",
+                "email_address": "info@summitrockholdings.com",
+                "rc_number": "9629888",
+                "company_type": "company",
+                "date_of_registration": "2026-06-23T12:54:18.188+00:00",
+                "company_name": "SUMMITROCK LIMITED",
+            },
+            "verification_status": "verified",
+        }
+
+        with patch(
+            "apps.companies.registration_lookup.dikript_lookup",
+            return_value=payload,
+        ):
+            company = lookup_company_registration_number("RC 9629888")
+
+        self.assertEqual(company.company_name, "SUMMITROCK LIMITED")
+        self.assertEqual(company.company_registration_number, "RC9629888")
+        self.assertEqual(company.company_address, "Adekunle Lawal")
+        self.assertEqual(company.company_status, "ACTIVE")
+        self.assertEqual(company.registration_date, "2026-06-23T12:54:18.188+00:00")
+        self.assertTrue(company.is_active)
+
     def test_lookup_company_registration_number_rejects_inactive_companies(self):
         payload = {
             "status": True,
@@ -169,7 +200,7 @@ class CompanyRegistrationLookupTests(SimpleTestCase):
         self.assertEqual(lookup_mock.call_args.kwargs["query"], {"regNumber": "RC1754689"})
         self.assertEqual(company.company_registration_number, "RC1754689")
 
-    @override_settings(DIKRIPT_SECRET_KEY="")
+    @override_settings(VERIFICATION_SERVICE="dikript", DIKRIPT_PUBLIC_KEY="", DIKRIPT_SECRET_KEY="")
     def test_lookup_company_registration_number_requires_configuration(self):
         with self.assertRaises(CompanyRegistrationLookupUnavailable):
             lookup_company_registration_number("RC 1754689")

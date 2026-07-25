@@ -15,9 +15,9 @@ from apps.notifications.models import Notification
 from apps.notifications.services import create_notification
 from apps.corpers.models import CorperProfile, hash_sensitive_identifier
 from apps.corpers.services import ensure_corper_profile
-from apps.verification.dikript import (
-    dikript_lookup,
-    extract_dikript_message,
+from apps.verification.verification_service import (
+    extract_verification_message as extract_dikript_message,
+    verification_lookup as dikript_lookup,
 )
 from apps.verification.models import DikriptVerificationCache, VerificationAttempt
 from apps.verification.serializers import (
