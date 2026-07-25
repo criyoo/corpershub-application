@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
 
@@ -7,6 +8,8 @@ from django.conf import settings
 from rest_framework.exceptions import APIException
 
 from apps.verification.models import DikriptVerificationCache
+
+logger = logging.getLogger(__name__)
 
 
 class VerificationProviderUnavailable(APIException):
@@ -17,6 +20,30 @@ class VerificationProviderUnavailable(APIException):
 
 def active_verification_provider() -> str:
     return str(getattr(settings, "VERIFICATION_SERVICE", "prembly") or "prembly").strip().lower()
+
+
+def fallback_verification_provider() -> str:
+    provider = str(getattr(settings, "VERIFICATION_FALLBACK_SERVICE", "dikript") or "").strip().lower()
+    return "" if provider == active_verification_provider() else provider
+
+
+def _dikript_is_configured() -> bool:
+    base_url = str(getattr(settings, "DIKRIPT_API_BASE_URL", "") or "").strip()
+    api_key = str(
+        getattr(settings, "DIKRIPT_SECRET_KEY", "") or getattr(settings, "DIKRIPT_PUBLIC_KEY", "") or ""
+    ).strip()
+    return bool(base_url and api_key)
+
+
+def _dikript_lookup(*, verification_type: str, path: str, lookup_value: str, query: dict[str, Any]) -> dict[str, Any]:
+    from apps.verification.dikript import dikript_lookup
+
+    return dikript_lookup(
+        verification_type=verification_type,
+        path=path,
+        lookup_value=lookup_value,
+        query=query,
+    )
 
 
 def _split_cac_registration_number(value: str) -> tuple[str, str]:
@@ -73,18 +100,36 @@ def verification_lookup(
 ) -> dict[str, Any]:
     provider = active_verification_provider()
     if provider == "prembly":
-        from apps.verification.prembly_verification import prembly_lookup
+        from apps.verification.prembly_verification import PremblyVerificationUnavailable, prembly_lookup
 
-        return prembly_lookup(**_prembly_lookup_kwargs(
-            verification_type=verification_type,
-            lookup_value=lookup_value,
-            query=query,
-        ))
+        try:
+            return prembly_lookup(
+                **_prembly_lookup_kwargs(
+                    verification_type=verification_type,
+                    lookup_value=lookup_value,
+                    query=query,
+                )
+            )
+        except PremblyVerificationUnavailable:
+            if fallback_verification_provider() == "dikript" and _dikript_is_configured():
+                logger.warning(
+                    "Primary verification provider unavailable; falling back to Dikript.",
+                    extra={
+                        "provider": provider,
+                        "fallback_provider": "dikript",
+                        "verification_type": verification_type,
+                    },
+                )
+                return _dikript_lookup(
+                    verification_type=verification_type,
+                    path=path,
+                    lookup_value=lookup_value,
+                    query=query,
+                )
+            raise
 
     if provider == "dikript":
-        from apps.verification.dikript import dikript_lookup
-
-        return dikript_lookup(
+        return _dikript_lookup(
             verification_type=verification_type,
             path=path,
             lookup_value=lookup_value,

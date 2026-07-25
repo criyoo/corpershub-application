@@ -206,6 +206,7 @@ OTP_MAX_ATTEMPTS = int(env("OTP_MAX_ATTEMPTS", "5") or "5")
 OTP_EMAIL_ASYNC = env_bool("OTP_EMAIL_ASYNC", True)
 SEED_DEMO_ACCOUNTS = env_bool("SEED_DEMO_ACCOUNTS", False)
 VERIFICATION_SERVICE = (env("VERIFICATION_SERVICE", "prembly") or "prembly").strip().lower()
+VERIFICATION_FALLBACK_SERVICE = (env("VERIFICATION_FALLBACK_SERVICE", "dikript") or "").strip().lower()
 DIKRIPT_API_BASE_URL = env("DIKRIPT_API_BASE_URL", "https://api.dikript.com") or "https://api.dikript.com"
 DIKRIPT_NIN_API_URL = (
     env("DIKRIPT_NIN_API_URL", "/dikript/verification/api/v1/getnin") or "/dikript/verification/api/v1/getnin"

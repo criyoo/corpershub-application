@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 
 from apps.verification.models import DikriptVerificationCache, NINDikriptVerificationCache
 from apps.verification.prembly_verification import (
+    PremblyVerificationUnavailable,
     PremblyWebhookVerificationError,
     _lookup_hash,
     prembly_lookup,
@@ -154,3 +155,39 @@ class PremblyLookupTests(TestCase):
                 "company_type": "RC",
             },
         )
+
+    @override_settings(
+        DIKRIPT_API_BASE_URL="https://api.dikript.com",
+        DIKRIPT_NIN_API_URL="/dikript/verification/api/v1/getnin",
+        DIKRIPT_SECRET_KEY="fallback-key",
+        VERIFICATION_FALLBACK_SERVICE="dikript",
+    )
+    def test_verification_lookup_falls_back_to_dikript_when_prembly_is_unavailable(self):
+        fallback_payload = {
+            "status": True,
+            "data": {"nin": "91231161558"},
+        }
+
+        with (
+            patch(
+                "apps.verification.prembly_verification.prembly_lookup",
+                side_effect=PremblyVerificationUnavailable(),
+            ),
+            patch(
+                "apps.verification.dikript.dikript_lookup",
+                return_value=fallback_payload,
+            ) as dikript_lookup_mock,
+        ):
+            response = verification_lookup(
+                verification_type=DikriptVerificationCache.VerificationType.NIN,
+                path="/dikript/verification/api/v1/getnin",
+                lookup_value="91231161558",
+                query={"nin": "91231161558"},
+            )
+
+        self.assertEqual(response, fallback_payload)
+        self.assertEqual(
+            dikript_lookup_mock.call_args.kwargs["path"],
+            "/dikript/verification/api/v1/getnin",
+        )
+        self.assertEqual(dikript_lookup_mock.call_args.kwargs["query"], {"nin": "91231161558"})
