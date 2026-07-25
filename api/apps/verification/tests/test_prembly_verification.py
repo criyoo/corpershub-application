@@ -93,7 +93,7 @@ class PremblyWebhookSecurityTests(TestCase):
     PREMBLY_CAC_API_URL="/verification/cac",
     PREMBLY_API_SECRET_KEY="test-key",
     PREMBLY_API_PUBLIC_KEY='test-public-key',
-    PREMBLY_TIMEOUT_SECONDS=10,
+    PREMBLY_TIMEOUT_SECONDS=60,
     PREMBLY_LOOKUP_CACHE_TIMEOUT_SECONDS=86400,
 )
 class PremblyLookupTests(TestCase):

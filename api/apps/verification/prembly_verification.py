@@ -235,7 +235,7 @@ def prembly_post(path: str, body: dict[str, Any]) -> dict[str, Any]:
     )
 
     try:
-        with urlopen(request, timeout=getattr(settings, "PREMBLY_TIMEOUT_SECONDS", 10)) as response:
+        with urlopen(request, timeout=getattr(settings, "PREMBLY_TIMEOUT_SECONDS", 60)) as response:
             return _decode_prembly_response(response.read())
     except HTTPError as exc:
         payload = _decode_prembly_response(exc.read(), allow_empty=True)
