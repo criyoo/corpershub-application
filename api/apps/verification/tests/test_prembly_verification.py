@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import hmac
 import json
 from unittest.mock import patch
 
@@ -5,7 +8,13 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 
 from apps.verification.models import DikriptVerificationCache, NINDikriptVerificationCache
-from apps.verification.prembly_verification import _lookup_hash, prembly_lookup
+from apps.verification.prembly_verification import (
+    PremblyWebhookVerificationError,
+    _lookup_hash,
+    prembly_lookup,
+    validate_prembly_webhook_request,
+    verify_prembly_webhook_signature,
+)
 from apps.verification.verification_service import verification_lookup
 
 
@@ -23,12 +32,67 @@ class _FakeHTTPResponse:
         return False
 
 
+class PremblyWebhookSecurityTests(TestCase):
+    def _signature(self, raw_body: bytes, public_key: str) -> str:
+        digest = hmac.new(public_key.encode("utf-8"), raw_body, hashlib.sha256).digest()
+        return base64.b64encode(digest).decode("utf-8")
+
+    @override_settings(PREMBLY_API_PUBLIC_KEY="test-prembly-public-key")
+    def test_prembly_webhook_signature_verifies_raw_body(self):
+        raw_body = b'{"status":"completed","data":{"session_id":"123"}}'
+        signature = self._signature(raw_body, "test-prembly-public-key")
+
+        self.assertTrue(verify_prembly_webhook_signature(raw_body=raw_body, signature=signature))
+        self.assertFalse(verify_prembly_webhook_signature(raw_body=raw_body + b" ", signature=signature))
+
+    @override_settings(PREMBLY_API_PUBLIC_KEY="")
+    def test_prembly_webhook_signature_rejects_missing_public_key(self):
+        raw_body = b'{"status":"completed"}'
+        signature = self._signature(raw_body, "test-prembly-public-key")
+
+        with self.assertLogs("apps.verification.prembly_verification", level="WARNING"):
+            self.assertFalse(verify_prembly_webhook_signature(raw_body=raw_body, signature=signature))
+
+    @override_settings(PREMBLY_API_PUBLIC_KEY="test-prembly-public-key", PREMBLY_WEBHOOK_TOKEN_CACHE_SECONDS=60)
+    def test_prembly_webhook_request_requires_signature_and_tracks_token(self):
+        raw_body = b'{"status":"completed","data":{"session_id":"123"}}'
+        token = "prembly-token-123"
+        cache.delete(f"prembly_webhook_token:{hashlib.sha256(token.encode('utf-8')).hexdigest()}")
+        headers = {
+            "HTTP_X_PREMBLY_SIGNATURE": self._signature(raw_body, "test-prembly-public-key"),
+            "HTTP_TOKEN": token,
+        }
+
+        validation = validate_prembly_webhook_request(headers=headers, raw_body=raw_body)
+        duplicate_validation = validate_prembly_webhook_request(headers=headers, raw_body=raw_body)
+
+        self.assertEqual(validation["token"], token)
+        self.assertFalse(validation["already_processed"])
+        self.assertTrue(duplicate_validation["already_processed"])
+
+    @override_settings(PREMBLY_API_PUBLIC_KEY="test-prembly-public-key")
+    def test_prembly_webhook_request_rejects_missing_or_invalid_security_headers(self):
+        raw_body = b'{"status":"completed"}'
+
+        with self.assertRaises(PremblyWebhookVerificationError):
+            validate_prembly_webhook_request(headers={}, raw_body=raw_body)
+        with self.assertRaises(PremblyWebhookVerificationError):
+            validate_prembly_webhook_request(
+                headers={
+                    "x-prembly-signature": self._signature(raw_body, "test-prembly-public-key"),
+                    "token": "token-1",
+                },
+                raw_body=b'{"status":"tampered"}',
+            )
+
+
 @override_settings(
     VERIFICATION_SERVICE="prembly",
     PREMBLY_API_BASE_URL="https://api.prembly.com",
     PREMBLY_NIN_API_URL="/verification/vnin",
     PREMBLY_CAC_API_URL="/verification/cac",
-    PREMBLY_API_KEY="test-key",
+    PREMBLY_API_SECRET_KEY="test-key",
+    PREMBLY_API_PUBLIC_KEY='test-public-key',
     PREMBLY_TIMEOUT_SECONDS=10,
     PREMBLY_LOOKUP_CACHE_TIMEOUT_SECONDS=86400,
 )

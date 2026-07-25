@@ -1002,7 +1002,8 @@ class CorperProfileAPITests(APITestCase):
         VERIFICATION_SERVICE="prembly",
         PREMBLY_API_BASE_URL="https://api.prembly.com",
         PREMBLY_NIN_API_URL="/verification/vnin",
-        PREMBLY_API_KEY="test-key",
+        PREMBLY_API_SECRET_KEY="test-key",
+        PREMBLY_API_PUBLIC_KEY='test-public-key',
         PREMBLY_TIMEOUT_SECONDS=10,
     )
     def test_nin_verification_accepts_prembly_payload_shape(self):
