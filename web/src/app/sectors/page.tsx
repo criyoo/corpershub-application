@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { BackButton } from "@/components/navigation/back-button";
+import { SectorsCompanyStat } from "@/components/sectors/sectors-company-stat";
 import { COMPANY_SECTORS } from "@/lib/company-sectors";
 
 export const metadata: Metadata = {
@@ -16,12 +17,15 @@ export default function SectorsPage() {
       <section className="mx-auto max-w-7xl">
         <BackButton />
 
-        <div className="mt-8 max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.26em] text-lime">Sectors</p>
-          <h1 className="mt-4 font-display text-4xl text-white">Sectors with PPA opportunities</h1>
-          <p className="mt-4 text-base leading-7 text-mist md:text-lg">
-            Find PPA opportunities and matching preferences within different sectors.
-          </p>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.26em] text-lime">Sectors</p>
+            <h1 className="mt-4 font-display text-4xl text-white">Sectors with PPA opportunities</h1>
+            <p className="mt-4 text-base leading-7 text-mist md:text-lg">
+              Find PPA opportunities and matching preferences within different sectors.
+            </p>
+          </div>
+          <SectorsCompanyStat />
         </div>
 
         <div className="mt-10 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
