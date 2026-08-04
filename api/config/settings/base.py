@@ -199,7 +199,7 @@ CHANNEL_LAYERS = {
 CELERY_BROKER_URL = VALKEY_URL
 CELERY_RESULT_BACKEND = VALKEY_URL
 CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_TASK_SOFT_TIME_LIMIT = 25 * 
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60
 
 OTP_EXPIRY_SECONDS = int(env("OTP_EXPIRY_SECONDS", "600") or "600")
 OTP_RESEND_WINDOW_SECONDS = int(env("OTP_RESEND_WINDOW_SECONDS", "60") or "60")
@@ -207,10 +207,8 @@ OTP_MAX_ATTEMPTS = int(env("OTP_MAX_ATTEMPTS", "5") or "5")
 OTP_EMAIL_ASYNC = env_bool("OTP_EMAIL_ASYNC", True)
 
 SEED_DEMO_ACCOUNTS = env_bool("SEED_DEMO_ACCOUNTS", False)
-
 VERIFICATION_SERVICE = (env("VERIFICATION_SERVICE", "prembly") or "prembly").strip().lower()
 VERIFICATION_FALLBACK_SERVICE = (env("VERIFICATION_FALLBACK_SERVICE", "dikript") or "").strip().lower()
-
 DIKRIPT_API_BASE_URL = env("DIKRIPT_API_BASE_URL", "https://api.dikript.com") or "https://api.dikript.com"
 DIKRIPT_NIN_API_URL = (
     env("DIKRIPT_NIN_API_URL", "/dikript/verification/api/v1/getnin") or "/dikript/verification/api/v1/getnin"
@@ -257,7 +255,6 @@ EMAIL_FROM_EMAIL = env("EMAIL_FROM_EMAIL", "") or EMAIL_HOST_USER or DEFAULT_FRO
 SERVER_EMAIL = env("SERVER_EMAIL", EMAIL_FROM_EMAIL)
 EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "60") or "60")
 WEB_URL = env("WEB_URL", "http://localhost:3000")
-
 COMPANY_VERIFICATION_ADMIN_EMAIL = (
     env("COMPANY_VERIFICATION_ADMIN_EMAIL", "admin@corpershub.ng") or "admin@corpershub.ng"
 )
