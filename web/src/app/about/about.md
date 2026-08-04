@@ -15,7 +15,7 @@ A finance graduate may be placed where their knowledge is barely used.
 A marketing talent may spend the service year doing unrelated paperwork.
 A qualified corps member may spend weeks searching for a PPA while spending heavily on transportation.
 
-At the same time, organisations that need young, capable, and motivated talent often struggle to find corps members whose skills match their roles, culture, and operational needs.
+At the same time, organisations often struggle to find young, capable, motivated and talented corps members whose skills match their roles, culture, and operational needs.
 
 The problem is not a lack of talent.
 
